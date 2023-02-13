@@ -65,10 +65,6 @@ async def on_message(message):
                     else:
                         video = result
                 except Exception as ex:
-                    # await message.channel.send('I could not access the reel posted by **' + username + '**. Here is some info about the error:')
-                    # template = "||{0}||"
-                    # errorToSend = template.format(ex)
-                    # await message.channel.send(errorToSend)
                     await failedToGetVideo(message, username, ex)
                 else:
                     print(f'Instagram reel: {video["title"]} has been downloaded!')
@@ -78,26 +74,32 @@ async def on_message(message):
 
                     with open(filepath, "rb") as video:
                         try:
-                            await SendVideoAttempt(video, message)
+                            await message.channel.send(file=discord.File(video))
+                            incrementSuccessJobCounter()
                         except:
                             if os.path.getsize(filepath) >= discordFileSizeLimit:
                                 if os.path.exists(filepath + '-compressed.mp4'):
                                     pass
+                                elif os.path.exists(filepath + '-compressing.mp4'):
+                                    await message.channel.send('This reel has already been requested and is now processing. Please try again later')
+                                    print('Post is already being compressed')
+                                    return
                                 else:
                                     await message.channel.send('Instagram reel posted by **' + username + '** was too large to upload. Will attempt to compress. (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
-                                    compress_video(filepath)
+                                    await compress_video(filepath)
                                 filepath = filepath + '-compressed.mp4'
 
                                 with open(filepath, "rb") as video:
                                     try:
                                         await message.channel.send('Instagram reel posted by **' + username + '** (compressed filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
-                                        await SendVideoAttempt(video, message)
+                                        await message.channel.send(file=discord.File(video))
+                                        incrementSuccessJobCounter()
                                     except:
                                         await message.channel.send("Something went wrong while uploading the reel onto discord :sweat:")
-                                        await incrementFailedJobCounter()
+                                        incrementFailedJobCounter()
                             else:
                                 await message.channel.send("Something went wrong while uploading the reel onto discord :sweat:")
-                                await incrementFailedJobCounter()
+                                incrementFailedJobCounter()
                 finally:
                     pass
         
@@ -125,18 +127,23 @@ async def on_message(message):
                             if os.path.getsize(filepath) >= discordFileSizeLimit:
                                 if os.path.exists(filepath + '-compressed.mp4'):
                                     pass
+                                elif os.path.exists(filepath + '-compressing.mp4'):
+                                    await message.channel.send('This post has already been requested and is now processing. Please try again later')
+                                    print('Post is already being compressed')
+                                    return
                                 else:
                                     await message.channel.send('Instagram post number **' + str(index) + '** was too large to upload. Will attempt to compress. (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
-                                    compress_video(filepath)
+                                    await compress_video(filepath)
                                 filepath = filepath + '-compressed.mp4'
 
                             with open(filepath, "rb") as video:
                                 await message.channel.send('Instagram post #' + str(index) + ' posted by **' + username + '** (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
                                 try:
-                                    await SendVideoAttempt(video, message)
+                                    await message.channel.send(file=discord.File(video))
+                                    incrementSuccessJobCounter()
                                 except:
                                     await message.channel.send("Something went wrong while uploading post #" + str(index) +" onto discord :sweat:")
-                                    await incrementFailedJobCounter()
+                                    incrementFailedJobCounter()
                             index += 1
 
                     else:
@@ -146,26 +153,32 @@ async def on_message(message):
 
                     with open(filepath, "rb") as video:
                         try:
-                            await SendVideoAttempt(video, message)
+                            await message.channel.send(file=discord.File(video))
+                            incrementSuccessJobCounter()
                         except:
                             if os.path.getsize(filepath) >= discordFileSizeLimit:
                                 if os.path.exists(filepath + '-compressed.mp4'):
                                     pass
+                                elif os.path.exists(filepath + '-compressing.mp4'):
+                                    await message.channel.send('This reel has already been requested and is now processing. Please try again later')
+                                    print('Post is already being compressed')
+                                    return
                                 else:
                                     await message.channel.send('Instagram reel posted by **' + username + '** was too large to upload. Will attempt to compress. (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')                                    
-                                    compress_video(filepath)
+                                    await compress_video(filepath)
                                 filepath = filepath + '-compressed.mp4'
 
                                 with open(filepath, "rb") as video:
                                     try:
                                         await message.channel.send('Instagram reel posted by **' + username + '** (compressed filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
-                                        await SendVideoAttempt(video, message)
+                                        await message.channel.send(file=discord.File(video))
+                                        incrementSuccessJobCounter()
                                     except:
                                         await message.channel.send(f"Something went wrong while uploading the reel onto discord :sweat:")
-                                        await incrementFailedJobCounter()
+                                        incrementFailedJobCounter()
                             else:
                                 await message.channel.send(f"Something went wrong while uploading the reel onto discord :sweat:")
-                                await incrementFailedJobCounter()
+                                incrementFailedJobCounter()
 
 async def failedToGetVideo(message, username, ex):
     await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
@@ -184,16 +197,14 @@ async def compress_video(filepath):
     else:
         print("Running on unknown OS. What are you using!?")
 
-async def incrementFailedJobCounter():
+def incrementFailedJobCounter():
     global failedJobs
     failedJobs = failedJobs + 1
     print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
 
-async def SendVideoAttempt(video, message):
+def incrementSuccessJobCounter():
     global successfulJobs
-    await message.channel.send(file=discord.File(video))
     successfulJobs = successfulJobs + 1
     print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
-
 
 client.run(secrets.TOKEN)
