@@ -65,11 +65,11 @@ async def on_message(message):
                     else:
                         video = result
                 except Exception as ex:
-                    await message.channel.send('I could not access the reel posted by **' + username + '**. Here is some info about the error:')
-                    template = "||{0}||"
-                    errorToSend = template.format(ex)
-                    await message.channel.send(errorToSend)
-                    await incrementFailedJobCounter()
+                    # await message.channel.send('I could not access the reel posted by **' + username + '**. Here is some info about the error:')
+                    # template = "||{0}||"
+                    # errorToSend = template.format(ex)
+                    # await message.channel.send(errorToSend)
+                    await failedToGetVideo(message, username, ex)
                 else:
                     print(f'Instagram reel: {video["title"]} has been downloaded!')
                     filepath = video["title"] + "-" + video["id"] +  "." + video["ext"]
@@ -111,12 +111,8 @@ async def on_message(message):
                         'https://www.instagram.com' + parsed_url.path,
                         download=True
                     )
-                except:
-                    await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
-                    template = "||{0}||"
-                    errorToSend = template.format(ex)
-                    await message.channel.send(errorToSend)
-                    await incrementFailedJobCounter()
+                except Exception as ex:
+                    await failedToGetVideo(message, username, ex)
                 else:
                     print(f'Instagram post has been downloaded!')
                     if 'entries' in result:
@@ -170,6 +166,13 @@ async def on_message(message):
                             else:
                                 await message.channel.send(f"Something went wrong while uploading the reel onto discord :sweat:")
                                 await incrementFailedJobCounter()
+
+async def failedToGetVideo(message, username, ex):
+    await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
+    template = "||{0}||"
+    errorToSend = template.format(ex)
+    await message.channel.send(errorToSend)
+    await incrementFailedJobCounter()
 
 async def compress_video(filepath):
     if platform.system() == "Windows":
