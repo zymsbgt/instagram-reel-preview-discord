@@ -87,21 +87,7 @@ async def on_message(message):
                                     pass
                                 else:
                                     await message.channel.send('Instagram reel posted by **' + username + '** was too large to upload. Will attempt to compress. (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
-                                    
-                                    if platform.system() == "Windows":
-                                        output = await asyncio.create_subprocess_exec(
-                                            "discord-video.bat", filepath,
-                                            stdout=asp.PIPE, stderr=asp.STDOUT,
-                                        )
-                                        await output.stdout.read()
-                                    elif platform.system() == "Linux":
-                                        output = await asyncio.create_subprocess_exec(
-                                            "bash", "discord-video.sh", filepath,
-                                            stdout=asp.PIPE, stderr=asp.STDOUT,
-                                        )
-                                        await output.stdout.read()
-                                    else:
-                                        print("Running on unknown OS. What are you using!?")
+                                    compress_video(filepath)
                                 filepath = filepath + '-compressed.mp4'
 
                                 with open(filepath, "rb") as video:
@@ -152,14 +138,7 @@ async def on_message(message):
                                     pass
                                 else:
                                     await message.channel.send('Instagram post number **' + str(index) + '** was too large to upload. Will attempt to compress. (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
-                                    if platform.system() == "Windows":
-                                        output = subprocess.check_output(["discord-video.bat", filepath])
-                                        print(output)
-                                    elif platform.system() == "Linux":
-                                        output = subprocess.check_output(["bash", "discord-video.sh", filepath])
-                                        print(output)
-                                    else:
-                                        print("Running on unknown OS. What are you using!?")
+                                    compress_video(filepath)
                                 filepath = filepath + '-compressed.mp4'
 
                             with open(filepath, "rb") as video:
@@ -190,20 +169,7 @@ async def on_message(message):
                                     pass
                                 else:
                                     await message.channel.send('Instagram reel posted by **' + username + '** was too large to upload. Will attempt to compress. (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')                                    
-                                    if platform.system() == "Windows":
-                                        output = await asyncio.create_subprocess_exec(
-                                            "discord-video.bat", filepath,
-                                            stdout=asp.PIPE, stderr=asp.STDOUT,
-                                        )
-                                        await output.stdout.read()
-                                    elif platform.system() == "Linux":
-                                        output = await asyncio.create_subprocess_exec(
-                                            "bash", "discord-video.sh", filepath,
-                                            stdout=asp.PIPE, stderr=asp.STDOUT,
-                                        )
-                                        await output.stdout.read()
-                                    else:
-                                        print("Running on unknown OS. What are you using!?")
+                                    compress_video(filepath)
                                 filepath = filepath + '-compressed.mp4'
 
                                 with open(filepath, "rb") as video:
@@ -220,5 +186,15 @@ async def on_message(message):
                                 await message.channel.send("Something went wrong while uploading the reel onto discord :sweat:")
                                 failedJobs = failedJobs + 1
                                 print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+
+async def compress_video(filepath):
+    if platform.system() == "Windows":
+        output = await asyncio.create_subprocess_exec("discord-video.bat", filepath,stdout=asp.PIPE, stderr=asp.STDOUT,)
+        await output.stdout.read()
+    elif platform.system() == "Linux":
+        output = await asyncio.create_subprocess_exec("bash", "discord-video.sh", filepath,stdout=asp.PIPE, stderr=asp.STDOUT,)
+        await output.stdout.read()
+    else:
+        print("Running on unknown OS. What are you using!?")
 
 client.run(secrets.TOKEN)
