@@ -59,6 +59,7 @@ async def on_message(message):
                         download=True
                     )
                     if 'entries' in result:
+                        # Note: This should never happen, but just in case it does, this code is here to save it.
                         video = result['entries'][0]
                         await message.channel.send("More than one reel has been detected. Will only send the first one")
                     else:
@@ -68,8 +69,7 @@ async def on_message(message):
                     template = "||{0}||"
                     errorToSend = template.format(ex)
                     await message.channel.send(errorToSend)
-                    failedJobs = failedJobs + 1
-                    print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                    await incrementFailedJobCounter()
                 else:
                     print(f'Instagram reel: {video["title"]} has been downloaded!')
                     filepath = video["title"] + "-" + video["id"] +  "." + video["ext"]
@@ -78,9 +78,7 @@ async def on_message(message):
 
                     with open(filepath, "rb") as video:
                         try:
-                            await message.channel.send(file=discord.File(video))
-                            successfulJobs += 1
-                            print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                            await SendVideoAttempt(video, message)
                         except:
                             if os.path.getsize(filepath) >= discordFileSizeLimit:
                                 if os.path.exists(filepath + '-compressed.mp4'):
@@ -93,17 +91,13 @@ async def on_message(message):
                                 with open(filepath, "rb") as video:
                                     try:
                                         await message.channel.send('Instagram reel posted by **' + username + '** (compressed filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
-                                        await message.channel.send(file=discord.File(video))
-                                        successfulJobs = successfulJobs + 1
-                                        print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                                        await SendVideoAttempt(video, message)
                                     except:
                                         await message.channel.send("Something went wrong while uploading the reel onto discord :sweat:")
-                                        failedJobs = failedJobs + 1
-                                        print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                                        await incrementFailedJobCounter()
                             else:
                                 await message.channel.send("Something went wrong while uploading the reel onto discord :sweat:")
-                                failedJobs = failedJobs + 1
-                                print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                                await incrementFailedJobCounter()
                 finally:
                     pass
         
@@ -122,8 +116,7 @@ async def on_message(message):
                     template = "||{0}||"
                     errorToSend = template.format(ex)
                     await message.channel.send(errorToSend)
-                    failedJobs = failedJobs + 1
-                    print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                    await incrementFailedJobCounter()
                 else:
                     print(f'Instagram post has been downloaded!')
                     if 'entries' in result:
@@ -144,13 +137,10 @@ async def on_message(message):
                             with open(filepath, "rb") as video:
                                 await message.channel.send('Instagram post #' + str(index) + ' posted by **' + username + '** (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
                                 try:
-                                    await message.channel.send(file=discord.File(video))
-                                    successfulJobs = successfulJobs + 1
-                                    print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                                    await SendVideoAttempt(video, message)
                                 except:
                                     await message.channel.send("Something went wrong while uploading post #" + str(index) +" onto discord :sweat:")
-                                    failedJobs = failedJobs + 1
-                                    print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                                    await incrementFailedJobCounter()
                             index += 1
 
                     else:
@@ -160,9 +150,7 @@ async def on_message(message):
 
                     with open(filepath, "rb") as video:
                         try:
-                            await message.channel.send(file=discord.File(video))
-                            successfulJobs = successfulJobs + 1
-                            print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                            await SendVideoAttempt(video, message)
                         except:
                             if os.path.getsize(filepath) >= discordFileSizeLimit:
                                 if os.path.exists(filepath + '-compressed.mp4'):
@@ -175,17 +163,13 @@ async def on_message(message):
                                 with open(filepath, "rb") as video:
                                     try:
                                         await message.channel.send('Instagram reel posted by **' + username + '** (compressed filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
-                                        await message.channel.send(file=discord.File(video))
-                                        successfulJobs = successfulJobs + 1
-                                        print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                                        await SendVideoAttempt(video, message)
                                     except:
-                                        await message.channel.send("Something went wrong while uploading the reel onto discord :sweat:")
-                                        failedJobs = failedJobs + 1
-                                        print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                                        await message.channel.send(f"Something went wrong while uploading the reel onto discord :sweat:")
+                                        await incrementFailedJobCounter()
                             else:
-                                await message.channel.send("Something went wrong while uploading the reel onto discord :sweat:")
-                                failedJobs = failedJobs + 1
-                                print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+                                await message.channel.send(f"Something went wrong while uploading the reel onto discord :sweat:")
+                                await incrementFailedJobCounter()
 
 async def compress_video(filepath):
     if platform.system() == "Windows":
@@ -196,5 +180,17 @@ async def compress_video(filepath):
         await output.stdout.read()
     else:
         print("Running on unknown OS. What are you using!?")
+
+async def incrementFailedJobCounter():
+    global failedJobs
+    failedJobs = failedJobs + 1
+    print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+
+async def SendVideoAttempt(video, message):
+    global successfulJobs
+    await message.channel.send(file=discord.File(video))
+    successfulJobs = successfulJobs + 1
+    print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+
 
 client.run(secrets.TOKEN)
