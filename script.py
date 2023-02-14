@@ -5,11 +5,12 @@ import ffmpeg
 import os
 import platform
 import subprocess
-import secrets # discord bot token
+from dotenv import load_dotenv # new discord bot token library
 import asyncio
 import asyncio.subprocess as asp
 
 discordFileSizeLimit = 8000000
+load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -207,4 +208,5 @@ def incrementSuccessJobCounter():
     successfulJobs = successfulJobs + 1
     print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
 
-client.run(secrets.TOKEN)
+token = os.getenv('DISCORD_TOKEN')
+client.run(token)

@@ -1,4 +1,4 @@
+.env
 /__pycache__
 ffmpeg2pass-*.log
-secrets.py
 *.mp4
