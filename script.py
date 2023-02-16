@@ -8,6 +8,7 @@ import subprocess
 from dotenv import load_dotenv # new discord bot token library
 import asyncio
 import asyncio.subprocess as asp
+#import pycurl
 
 discordFileSizeLimit = 8000000
 load_dotenv()
@@ -75,8 +76,7 @@ async def on_message(message):
 
                     with open(filepath, "rb") as video:
                         try:
-                            await message.channel.send(file=discord.File(video))
-                            incrementSuccessJobCounter()
+                            await AttemptToSendVideo(message, video)
                         except:
                             if os.path.getsize(filepath) >= discordFileSizeLimit:
                                 if os.path.exists(filepath + '-compressed.mp4'):
@@ -93,16 +93,13 @@ async def on_message(message):
                                 with open(filepath, "rb") as video:
                                     try:
                                         await message.channel.send('Instagram reel posted by **' + username + '** (compressed filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
-                                        await message.channel.send(file=discord.File(video))
-                                        incrementSuccessJobCounter()
+                                        await AttemptToSendVideo(message, video)
                                     except:
                                         await message.channel.send("Something went wrong while uploading the reel onto discord :sweat:")
                                         incrementFailedJobCounter()
                             else:
                                 await message.channel.send("Something went wrong while uploading the reel onto discord :sweat:")
                                 incrementFailedJobCounter()
-                finally:
-                    pass
         
         if parsed_url.path.startswith('/p'):
             ydl = yt_dlp.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
@@ -140,8 +137,7 @@ async def on_message(message):
                             with open(filepath, "rb") as video:
                                 await message.channel.send('Instagram post #' + str(index) + ' posted by **' + username + '** (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
                                 try:
-                                    await message.channel.send(file=discord.File(video))
-                                    incrementSuccessJobCounter()
+                                    await AttemptToSendVideo(message, video)
                                 except:
                                     await message.channel.send("Something went wrong while uploading post #" + str(index) +" onto discord :sweat:")
                                     incrementFailedJobCounter()
@@ -154,8 +150,7 @@ async def on_message(message):
 
                     with open(filepath, "rb") as video:
                         try:
-                            await message.channel.send(file=discord.File(video))
-                            incrementSuccessJobCounter()
+                            await AttemptToSendVideo(message, video)
                         except:
                             if os.path.getsize(filepath) >= discordFileSizeLimit:
                                 if os.path.exists(filepath + '-compressed.mp4'):
@@ -172,8 +167,7 @@ async def on_message(message):
                                 with open(filepath, "rb") as video:
                                     try:
                                         await message.channel.send('Instagram reel posted by **' + username + '** (compressed filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
-                                        await message.channel.send(file=discord.File(video))
-                                        incrementSuccessJobCounter()
+                                        await AttemptToSendVideo(message, video)
                                     except:
                                         await message.channel.send(f"Something went wrong while uploading the reel onto discord :sweat:")
                                         incrementFailedJobCounter()
@@ -198,14 +192,15 @@ async def compress_video(filepath):
     else:
         print("Running on unknown OS. What are you using!?")
 
+async def AttemptToSendVideo(message, video):
+    global successfulJobs
+    await message.channel.send(file=discord.File(video))
+    successfulJobs = successfulJobs + 1
+    print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
+
 def incrementFailedJobCounter():
     global failedJobs
     failedJobs = failedJobs + 1
-    print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
-
-def incrementSuccessJobCounter():
-    global successfulJobs
-    successfulJobs = successfulJobs + 1
     print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
 
 token = os.getenv('DISCORD_TOKEN')
