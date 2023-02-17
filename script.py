@@ -46,6 +46,7 @@ async def on_message(message):
     if 'instagram.com' in message.content:
         global successfulJobs, failedJobs
         print(f'Instagram content detected in message: {username} on #{channel} in "{guild}": {user_message}')
+        await message.add_reaction("⏬")
         cleanedMessage = message.content.replace("<", "")
         cleanedMessage = cleanedMessage.replace(">", "")
         
@@ -174,6 +175,20 @@ async def on_message(message):
                             else:
                                 await message.channel.send(f"Something went wrong while uploading the reel onto discord :sweat:")
                                 incrementFailedJobCounter()
+        else:
+            print("Not a valid Instagram post or reel")
+
+@client.event
+async def on_reaction_add(reaction, user):
+    if user == client.user:
+        return
+
+    for reaction in reaction.message.reactions:
+        if reaction.me:
+            # await user.send("You reacted with the same emoji as the bot!") # this is for DMing the person who reacted
+            await reaction.message.channel.send("You reacted with the same emoji as the bot!")
+
+
 
 async def failedToGetVideo(message, username, ex):
     await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
