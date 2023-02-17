@@ -40,6 +40,7 @@ async def on_message(message):
         return
     
     isPinged = False
+    killSwitch = False
 
     if client.user.mentioned_in(message):
         print(f'Pinged in message: {username} on #{channel} in "{guild}": {user_message}')
@@ -59,6 +60,10 @@ async def on_message(message):
                 print(f'Match found! Processing Instagram link: {instagram_link}')
             
                 parsed_url = urlparse(instagram_link)
+                if (killSwitch == True):
+                    await failedToGetVideo(message, username)
+                    return
+                
                 if parsed_url.path.startswith('/reel'):
                     ydl = yt_dlp.YoutubeDL({'outtmpl': '%(title)s-%(id)s.%(ext)s'})
                     
@@ -197,6 +202,11 @@ async def on_reaction_add(reaction, user):
             # await reaction.message.channel.send(f"{user} reacted with the same emoji as the bot! This feature is coming soon")
 
 
+
+async def failedToGetVideo(message, username):
+    await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
+    await message.channel.send("||[0;31mERROR:[0m [Instagram] CoXvYm_gVBE: Requested content is not available, rate-limit reached or login required. Use --cookies, --cookies-from-browser, --username and --password, or --netrc (instagram) to provide account credentials||")
+    await incrementFailedJobCounter()
 
 async def failedToGetVideo(message, username, ex):
     await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
