@@ -61,7 +61,7 @@ async def on_message(message):
             
                 parsed_url = urlparse(instagram_link)
                 if (killSwitch == True):
-                    await failedToGetVideo(message, username)
+                    await failedToGetVideoKillSwitch(message, username)
                     return
                 
                 if parsed_url.path.startswith('/reel'):
@@ -203,17 +203,17 @@ async def on_reaction_add(reaction, user):
 
 
 
-async def failedToGetVideo(message, username):
+async def failedToGetVideoKillSwitch(message, username):
     await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
     await message.channel.send("||[0;31mERROR:[0m [Instagram] CoXvYm_gVBE: Requested content is not available, rate-limit reached or login required. Use --cookies, --cookies-from-browser, --username and --password, or --netrc (instagram) to provide account credentials||")
-    await incrementFailedJobCounter()
+    incrementFailedJobCounter()
 
 async def failedToGetVideo(message, username, ex):
     await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
     template = "||{0}||"
     errorToSend = template.format(ex)
     await message.channel.send(errorToSend)
-    await incrementFailedJobCounter()
+    incrementFailedJobCounter()
 
 async def compress_video(filepath):
     if platform.system() == "Windows":
