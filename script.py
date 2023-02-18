@@ -1,3 +1,5 @@
+# This file is the first written version of the bot. Production ready.
+
 import discord
 from urllib.parse import urlparse
 import yt_dlp
@@ -74,10 +76,9 @@ async def on_message(message):
                     ydl = yt_dlp.YoutubeDL({'outtmpl': '%(title)s-%(id)s.%(ext)s'})
                     
                     with ydl:
-                        print("Parsed URL: " + parsed_url.path)
                         try:
                             result = ydl.extract_info(
-                                'https://www.instagram.com' + parsed_url.path,
+                                instagram_link,
                                 download=True
                             )
                             if 'entries' in result:
@@ -125,10 +126,9 @@ async def on_message(message):
                     ydl = yt_dlp.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
                     
                     with ydl:
-                        print("Parsed URL: " + parsed_url.path)
                         try:
                             result = ydl.extract_info(
-                                'https://www.instagram.com' + parsed_url.path,
+                                instagram_link,
                                 download=True
                             )
                         except Exception as ex:
