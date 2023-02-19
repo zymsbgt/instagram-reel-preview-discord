@@ -60,7 +60,7 @@ async def on_message(message):
             matches = re.finditer(instagram_regex, user_message)
             for match in matches:
                 instagram_link = match.group('url')
-                editMessage = await message.channel.send(f'<Instagram post detected! Processing Instagram link: {instagram_link}>')
+                editMessage = await message.channel.send(f'Instagram post detected! Processing Instagram link: <{instagram_link}>')
             
                 parsed_url = urlparse(instagram_link)
                 if (killSwitch == True):
@@ -72,7 +72,7 @@ async def on_message(message):
                     return
                 
                 if parsed_url.path.startswith('/reel'):
-                    await editMessage.edit(content=f'<Instagram reel detected! Processing Instagram link: {instagram_link}>')
+                    await editMessage.edit(content=f'Instagram reel detected! Processing Instagram link: <{instagram_link}>')
                     ydl = yt_dlp.YoutubeDL({'outtmpl': '%(title)s-%(id)s.%(ext)s'})
                     
                     with ydl:
