@@ -1,4 +1,4 @@
-# This file is for a complete rewrite of the bot. Not ready for production
+# This file is for a complete rewrite of the bot. Production ready.
 
 import discord
 from urllib.parse import urlparse
@@ -70,7 +70,7 @@ async def on_message(message):
             matches = re.finditer(instagram_regex, user_message)
             for match in matches:
                 instagram_link = match.group('url')
-                editMessage = await message.channel.send(f'<Instagram post detected! Processing Instagram link: {instagram_link}>')
+                editMessage = await message.channel.send(f'New job: Processing Instagram link: <{instagram_link}>')
                 
                 if (killSwitch == True):
                     await failedToGetVideoKillSwitch(message, username, editMessage, True)
@@ -83,44 +83,100 @@ async def on_message(message):
                 parsed_url = urlparse(instagram_link)
 
                 if parsed_url.path.startswith('/reel'):
-                    isReel = True
+                    reelOrPost = "reel"
                 elif parsed_url.path.startswith('/p'):
-                    isReel = False
+                    reelOrPost = "post"
+                await editMessage.edit(content=f'New job: Processing Instagram {reelOrPost}: <{instagram_link}>')
                 
-                # Set the video title
-                if (isReel == True):
-                    ydl = yt_dlp.YoutubeDL({'outtmpl': '%(title)s-%(id)s.%(ext)s'})
+                # Sets the video title.
+                if (reelOrPost == "reel"):
+                    ydl = yt_dlp.YoutubeDL({'outtmpl': f'%(id)s-%(title)s-{reelOrPost}.%(ext)s'})
                 else:
-                    ydl = yt_dlp.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
+                    ydl = yt_dlp.YoutubeDL({'outtmpl': f'%(id)s-%(title)s-{reelOrPost}.%(ext)s'})
                 
-                #post
                 with ydl:
-                        try:
-                            result = ydl.extract_info(
+                    # Todo: Rewrite this part so that we can analyse local files to see if a video has been requested before instead of querying Instagram again.
+                    # The ID of the video will always match the URL after '/reel/' or '/post/'
+                    try: 
+                        result = ydl.extract_info(
                                 instagram_link,
                                 download=True
                             )
-                        except Exception as ex:
-                            await failedToGetVideo(message, username, ex, editMessage)
-                
-                #reel
-                with ydl:
-                        try:
-                            result = ydl.extract_info(
-                                instagram_link,
-                                download=True
-                            )
-                            if 'entries' in result:
-                                # Note: This should never happen, but just in case it does, this code is here to save it.
-                                video = result['entries'][0]
-                                await message.channel.send("More than one reel has been detected. Will only send the first one")
-                            else:
-                                video = result
-                        except Exception as ex:
-                            await failedToGetVideo(message, username, ex, editMessage)
+                        if (('entries' in result) and (reelOrPost == "reel")):
+                            # Note: This should never happen, but just in case it does, this code is here to save it.
+                            video = result['entries'][0]
+                            await message.channel.send(f"More than one {reelOrPost} has been detected. Will only send the first one")
+                        else:
+                            video = result
+                    except Exception as ex:
+                        await failedToGetVideo(message, username, ex, editMessage)
+                    else: # Successful in obtaining video
+                        print(f'Instagram {reelOrPost}: {video["title"]} has been downloaded!')
+                        if 'entries' in result: # If there are multiple videos in a post
+                            videoList = result['entries']
+                            index = 1
+                            for i in videoList:
+                                video = i
+                                filepath = video["id"] + "-" + video["title"] + "-" + reelOrPost + "." + video["ext"]
+                                print(f"The filesize of the video is {os.path.getsize(filepath)}bytes")
 
-                
-                
+                                with open(filepath, "rb") as video:
+                                    try:
+                                        await AttemptToSendVideo(message, video, editMessage)
+                                    except:
+                                        if os.path.getsize(filepath) >= discordFileSizeLimit:
+                                            if os.path.exists(filepath + '-compressed.mp4'):
+                                                pass
+                                            elif os.path.exists(filepath + '-compressing.mp4'):
+                                                await message.channel.send('This post has already been requested and is now processing. Please try again later')
+                                                print('Post is already being compressed')
+                                                return
+                                            else:
+                                                await editMessage.edit(content='Instagram post number **' + str(index) + '** was too large to upload. Will attempt to compress. (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
+                                                await compress_video(filepath, editMessage)
+                                            filepath = filepath + '-compressed.mp4'
+
+                                        with open(filepath, "rb") as video:
+                                            await message.channel.send('Instagram post #' + str(index) + ' posted by **' + username + '** (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
+                                            try:
+                                                await AttemptToSendVideo(message, video, editMessage)
+                                            except:
+                                                await message.channel.send("Something went wrong while uploading post #" + str(index) +" onto discord :sweat:")
+                                                await incrementFailedJobCounter(editMessage)
+                                        index += 1
+                        else: # If there is only one video to download (can be a post or a reel)
+                            video = result
+                            filepath = video["id"] + "-" + video["title"] + "-" + reelOrPost + "." + video["ext"]
+                            print(f"The filesize of the video is {os.path.getsize(filepath)}bytes")
+
+                            with open(filepath, "rb") as video:
+                                try:
+                                    await AttemptToSendVideo(message, video, editMessage)
+                                except:
+                                    if os.path.getsize(filepath) >= discordFileSizeLimit:
+                                        if os.path.exists(filepath + '-compressed.mp4'):
+                                            pass
+                                        elif os.path.exists(filepath + '-compressing.mp4'):
+                                            await message.channel.send('This reel has already been requested and is now processing. Please try again later')
+                                            print('Post is already being compressed')
+                                            return
+                                        else:                                   
+                                            await editMessage.edit(content='Instagram reel posted by **' + username + '** was too large to upload. Will attempt to compress. (filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
+                                            await compress_video(filepath, editMessage)
+                                        filepath = filepath + '-compressed.mp4'
+
+                                        with open(filepath, "rb") as video:
+                                            try:
+                                                await message.channel.send('Instagram reel posted by **' + username + '** (compressed filesize: ' + str(os.path.getsize(filepath)) + ' bytes)')
+                                                await AttemptToSendVideo(message, video, editMessage)
+                                            except:
+                                                await message.channel.send(f"Something went wrong while uploading the reel onto discord :sweat:")
+                                                await incrementFailedJobCounter(editMessage)
+                                    else:
+                                        await message.channel.send(f"Something went wrong while uploading the reel onto discord :sweat:")
+                                        await incrementFailedJobCounter(editMessage)
+
+
 
 async def failedToGetVideoKillSwitch(message, username, editMessage, ghostMode = True):
     await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
@@ -139,7 +195,8 @@ async def failedToGetVideo(message, username, ex, editMessage):
     consecutiveFailedJobs = consecutiveFailedJobs + 1
     await incrementFailedJobCounter(editMessage)
 
-async def compress_video(filepath):
+async def compress_video(filepath, editMessage):
+    #await editMessage.edit(content=f'New job: Compressing video')
     if platform.system() == "Windows":
         output = await asyncio.create_subprocess_exec("discord-video.bat", filepath,stdout=asp.PIPE, stderr=asp.STDOUT,)
         await output.stdout.read()
