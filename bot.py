@@ -224,10 +224,8 @@ async def ProcessVideoCompression(editMessage, reelOrPost, message, username, fi
 
 async def failedToGetVideoKillSwitch(message, username, editMessage, ghostMode = True):
     await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
-    if (ghostMode == True):
-        await message.channel.send("||[0;31mERROR:[0m [Instagram] CoXvYm_gVBE: Requested content is not available, rate-limit reached or login required. Use --cookies, --cookies-from-browser, --username and --password, or --netrc (instagram) to provide account credentials||")
-    else:
-        await message.channel.send("Kill switch activated as the bot's current IP address is suspected to be blocked by Instagram. Please change the bot's IP address.")
+    # await message.channel.send('All proxies have either been blocked by Instagram or are unavailable')
+    await message.channel.send("Kill switch activated as the bot's current IP address is suspected to be blocked by Instagram. Please change the bot's IP address.")
     await incrementFailedJobCounter(editMessage)
 
 async def failedToGetVideo(message, username, ex, editMessage):
