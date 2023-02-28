@@ -90,9 +90,9 @@ async def on_message(message):
     if client.user.mentioned_in(message):
         print(f'Pinged in message: {username} on #{channel} in "{guild}": {user_message}')
         isPinged = True
-
-    if 'instagram.com' in message.content:
-        global successfulJobs, failedJobs, consecutiveFailedJobs
+    
+    instagram_regex = r"(?P<url>https?://(www\.)?instagram\.com/(p|reel)/[a-zA-Z0-9-_]+)"
+    if re.finditer(instagram_regex, user_message):
         print(f'Instagram content detected in message: {username} on #{channel} in "{guild}": {user_message}')
         if (isPinged == False):
             print("Putting a download reaction emoji")
