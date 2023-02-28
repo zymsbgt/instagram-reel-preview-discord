@@ -11,6 +11,7 @@ import asyncio
 import asyncio.subprocess as asp
 import re
 import glob
+import time
 #import pycurl
 
 discordFileSizeLimit = 8000000
@@ -25,6 +26,22 @@ successfulJobs = 0
 failedJobs = 0
 consecutiveFailedJobs = 0
 
+def timeTakenToCompleteJob(func):
+    def wrapper():
+        t1 = time.time()
+        func()
+        t2 = time.time()-t1
+        print(f'The job took {t2} seconds to complete')
+    return wrapper
+
+def timeTakenToCompressVideo(func):
+    def wrapper():
+        t1 = time.time()
+        func()
+        t2 = time.time()-t1
+        print(f'The video took {t2} seconds to compress')
+    return wrapper
+
 @client.event
 async def on_ready():
     servers = client.guilds
@@ -37,6 +54,8 @@ async def on_ready():
 async def on_reaction_add(reaction, user):
     username = str(reaction.message.author).split('#')[0]
     user_message = str(reaction.message.content)
+    channel = str(reaction.message.channel.name)
+    guild = str(reaction.message.guild.name)
 
     if user == client.user:
         return
@@ -45,8 +64,17 @@ async def on_reaction_add(reaction, user):
         if reaction.me:
             # await user.send("You reacted with the same emoji as the bot! This feature is coming soon") # this is for DMing the person who reacted
             # await reaction.message.channel.send(f"{user} reacted with the same emoji as the bot! This feature is coming soon")
-            print(f'{user} reacted on message with content {user_message}. Starting new job.')
-            await CreatePreview(reaction.message, username, user_message)
+            print(f'{user} reacted on message with content {user_message} in #{channel} in guild {guild}. Starting new job.')
+            try:
+                tryToSendMessage = await message.channel.send(f'Attempting to start job...')
+            except Exception as ex:
+                await user.send("It appears that I do not have permission to send the video in the channel. Here's more info on what went wrong:")
+                template = "||{0}||"
+                errorToSend = template.format(ex)
+                await user.send(errorToSend)
+            else:
+                await tryToSendMessage.delete()
+                await CreatePreview(reaction.message, username, user_message)
 
 @client.event
 async def on_message(message):
@@ -77,7 +105,12 @@ async def CreatePreview(message, username, user_message):
     matches = re.finditer(instagram_regex, user_message)
     for match in matches:
         instagram_link = match.group('url')
-        editMessage = await message.channel.send(f'New job: Processing Instagram link: <{instagram_link}>')
+        try:
+            editMessage = await message.channel.send(f'New job: Processing Instagram link: <{instagram_link}>')
+        except Exception as ex:
+            # No permissions to send in channel
+            # Maybe DM the user the video instead?
+            return
         
         killSwitch = False # Change this value to activate/deactivate killswitch
         if (killSwitch == True):
@@ -211,16 +244,21 @@ async def ProcessVideoCompression(editMessage, reelOrPost, message, username, fi
         return True
     else:                                   
         await editMessage.edit(content=f'Instagram {reelOrPost} posted by **{username}** was too large to upload. Will attempt to compress. (filesize: {str(os.path.getsize(filepath))} bytes)')
-        if platform.system() == "Windows":
-            output = await asyncio.create_subprocess_exec("discord-video.bat", filepath,stdout=asp.PIPE, stderr=asp.STDOUT,)
-            await output.stdout.read()
-        elif platform.system() == "Linux":
-            output = await asyncio.create_subprocess_exec("bash", "discord-video.sh", filepath,stdout=asp.PIPE, stderr=asp.STDOUT,)
-            await output.stdout.read()
-        else:
-            print("Running on unknown OS. What are you using!?")
+        await compressVideo()
         await editMessage.edit(content=f'Uploading compressed video (Attempt #2)...')
     return False
+
+@timeTakenToCompressVideo
+async def compressVideo(filepath):
+    if platform.system() == "Windows":
+        output = await asyncio.create_subprocess_exec("discord-video.bat", filepath,stdout=asp.PIPE, stderr=asp.STDOUT,)
+        await output.stdout.read()
+    elif platform.system() == "Linux":
+        output = await asyncio.create_subprocess_exec("bash", "discord-video.sh", filepath,stdout=asp.PIPE, stderr=asp.STDOUT,)
+        await output.stdout.read()
+    else:
+        print("Running on unknown OS. What are you using!?")
+
 
 async def failedToGetVideoKillSwitch(message, username, editMessage, ghostMode = True):
     await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
