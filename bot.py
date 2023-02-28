@@ -26,22 +26,6 @@ successfulJobs = 0
 failedJobs = 0
 consecutiveFailedJobs = 0
 
-async def timeTakenToCompleteJob(func):
-    async def wrapper(*args, **kwargs):
-        t1 = time.time()
-        await func(*args, **kwargs)
-        t2 = time.time()-t1
-        print(f'The job took {t2} seconds to complete')
-    return wrapper
-
-async def timeTakenToCompressVideo(func):
-    async def wrapper(*args, **kwargs):
-        t1 = time.time()
-        await func(*args, **kwargs)
-        t2 = time.time()-t1
-        print(f'The video took {t2} seconds to compress')
-    return wrapper
-
 @client.event
 async def on_ready():
     servers = client.guilds
@@ -101,8 +85,11 @@ async def on_message(message):
 
 #@timeTakenToCompleteJob
 async def CreatePreview(message, username, user_message):
+    timeElapsed = time.time()
     instagram_regex = r"(?P<url>https?://(www\.)?instagram\.com/(p|reel)/[a-zA-Z0-9-_]+)"
     matches = re.finditer(instagram_regex, user_message)
+    #if len(matches) == 0:
+    #    await message.channel.send('No Instagram posts or reels detected')
     for match in matches:
         instagram_link = match.group('url')
         try:
@@ -114,10 +101,10 @@ async def CreatePreview(message, username, user_message):
         
         killSwitch = False # Change this value to activate/deactivate killswitch
         if (killSwitch == True):
-            await failedToGetVideoKillSwitch(message, username, editMessage, True)
+            await failedToGetVideoKillSwitch(timeElapsed, message, username, editMessage, True)
             return
         if (consecutiveFailedJobs >= 2):
-            await failedToGetVideoKillSwitch(message, username, editMessage, False)
+            await failedToGetVideoKillSwitch(timeElapsed, message, username, editMessage, False)
             return
         
         parsed_url = urlparse(instagram_link)
@@ -157,7 +144,7 @@ async def CreatePreview(message, username, user_message):
                         video = result
                     print(f'Instagram {reelOrPost}: {video["title"]} has been downloaded!')
                 except Exception as ex:
-                    await failedToGetVideo(message, username, ex, editMessage)
+                    await failedToGetVideo(timeElapsed, message, username, ex, editMessage)
                     return
         else:
             videoIsFromCache = True
@@ -184,7 +171,7 @@ async def CreatePreview(message, username, user_message):
 
                 with open(filepath, "rb") as video:
                     try:
-                        await AttemptToSendVideo(message, video, editMessage)
+                        await AttemptToSendVideo(timeElapsed, message, video, editMessage)
                     except:
                         if os.path.getsize(filepath) >= discordFileSizeLimit:
                             if (await ProcessVideoCompression(editMessage, reelOrPost, message, username, filepath) == True): # If true, video is already processing
@@ -195,13 +182,13 @@ async def CreatePreview(message, username, user_message):
                             await message.channel.send(f'Instagram {reelOrPost} #{str(index)} posted by **{username}** (filesize: {str(os.path.getsize(filepath))} bytes)')
                             try:
                                 await editMessage.edit(content=f'Uploading compressed video (Attempt #2)...')
-                                await AttemptToSendVideo(message, video, editMessage)
+                                await AttemptToSendVideo(timeElapsed, message, video, editMessage)
                             except Exception as ex:
                                 await message.channel.send(f"Something went wrong while uploading the {reelOrPost} onto discord, here's what happened:")
                                 template = "||{0}||"
                                 errorToSend = template.format(ex)
                                 await message.channel.send(errorToSend)
-                                await incrementFailedJobCounter(editMessage)
+                                await incrementFailedJobCounter(timeElapsed, editMessage)
                         index += 1
         else: # If there is only one video to download (can be a post or a reel)
             video = result
@@ -211,7 +198,7 @@ async def CreatePreview(message, username, user_message):
 
             with open(filepath, "rb") as video:
                 try:
-                    await AttemptToSendVideo(message, video, editMessage)
+                    await AttemptToSendVideo(timeElapsed, message, video, editMessage)
                 except:
                     if os.path.getsize(filepath) >= discordFileSizeLimit:
                         if (await ProcessVideoCompression(editMessage, reelOrPost, message, username, filepath) == True): # If true, video is already processing
@@ -221,16 +208,16 @@ async def CreatePreview(message, username, user_message):
                         with open(filepath, "rb") as video:
                             try:
                                 await message.channel.send(f'Instagram reel posted by **{username}** (compressed filesize: {str(os.path.getsize(filepath))} bytes)')
-                                await AttemptToSendVideo(message, video, editMessage)
+                                await AttemptToSendVideo(timeElapsed, message, video, editMessage)
                             except Exception as ex:
                                 await message.channel.send(f"Something went wrong while uploading the {reelOrPost} onto discord, here's what happened:")
                                 template = "||{0}||"
                                 errorToSend = template.format(ex)
                                 await message.channel.send(errorToSend)
-                                await incrementFailedJobCounter(editMessage)
+                                await incrementFailedJobCounter(timeElapsed, editMessage)
                     else:
                         await message.channel.send(f"Something went wrong while uploading the {reelOrPost} onto discord :sweat:")
-                        await incrementFailedJobCounter(editMessage)
+                        await incrementFailedJobCounter(timeElapsed, editMessage)
 
 
 
@@ -244,12 +231,13 @@ async def ProcessVideoCompression(editMessage, reelOrPost, message, username, fi
         return True
     else:                                   
         await editMessage.edit(content=f'Instagram {reelOrPost} posted by **{username}** was too large to upload. Will attempt to compress. (filesize: {str(os.path.getsize(filepath))} bytes)')
-        await compressVideo()
+        await compressVideo(filepath)
         await editMessage.edit(content=f'Uploading compressed video (Attempt #2)...')
     return False
 
-@timeTakenToCompressVideo
+#@timeTakenToCompressVideo
 async def compressVideo(filepath):
+    timeElapsed2 = time.time()
     if platform.system() == "Windows":
         output = await asyncio.create_subprocess_exec("discord-video.bat", filepath,stdout=asp.PIPE, stderr=asp.STDOUT,)
         await output.stdout.read()
@@ -258,35 +246,41 @@ async def compressVideo(filepath):
         await output.stdout.read()
     else:
         print("Running on unknown OS. What are you using!?")
+    timeElapsed2 = time.time()-timeElapsed2
+    print(f'Compression finished! Time elapsed: {timeElapsed2} seconds')
 
 
-async def failedToGetVideoKillSwitch(message, username, editMessage, ghostMode = True):
+async def failedToGetVideoKillSwitch(timeElapsed, message, username, editMessage, ghostMode = True):
     await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
     # await message.channel.send('All proxies have either been blocked by Instagram or are unavailable')
     await message.channel.send("Kill switch activated as the bot's current IP address is suspected to be blocked by Instagram. Please change the bot's IP address.")
-    await incrementFailedJobCounter(editMessage)
+    await incrementFailedJobCounter(timeElapsed, editMessage)
 
-async def failedToGetVideo(message, username, ex, editMessage):
+async def failedToGetVideo(timeElapsed, message, username, ex, editMessage):
     global consecutiveFailedJobs
     await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
     template = "||{0}||"
     errorToSend = template.format(ex)
     await message.channel.send(errorToSend)
     consecutiveFailedJobs = consecutiveFailedJobs + 1
-    await incrementFailedJobCounter(editMessage)
+    await incrementFailedJobCounter(timeElapsed, editMessage)
 
-async def AttemptToSendVideo(message, video, editMessage):
+async def AttemptToSendVideo(timeElapsed, message, video, editMessage):
     global successfulJobs, consecutiveFailedJobs
     await message.channel.send(file=discord.File(video))
     await editMessage.delete()
     successfulJobs = successfulJobs + 1
     consecutiveFailedJobs = 0
+    timeElapsed = time.time()-timeElapsed
+    print(f'Job complete! Time elapsed: {timeElapsed} seconds')
     print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
 
-async def incrementFailedJobCounter(editMessage):
+async def incrementFailedJobCounter(timeElapsed, editMessage):
     global failedJobs
     await editMessage.delete()
     failedJobs = failedJobs + 1
+    timeElapsed = time.time()-timeElapsed
+    print(f'Job failed! Time elapsed: {timeElapsed} seconds')
     print(f'Successful jobs: {successfulJobs}, Failed jobs: {failedJobs}')
 
 token = os.getenv('DISCORD_TOKEN')
