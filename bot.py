@@ -99,7 +99,8 @@ async def on_message(message):
             await message.add_reaction("⏬")
         else:
             await CreatePreview(message, username, user_message)
-    
+
+@timeTakenToCompleteJob
 async def CreatePreview(message, username, user_message):
     instagram_regex = r"(?P<url>https?://(www\.)?instagram\.com/(p|reel)/[a-zA-Z0-9-_]+)"
     matches = re.finditer(instagram_regex, user_message)
