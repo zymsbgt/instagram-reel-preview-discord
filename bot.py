@@ -83,7 +83,6 @@ async def on_message(message):
         else:
             await CreatePreview(message, username, user_message)
 
-#@timeTakenToCompleteJob
 async def CreatePreview(message, username, user_message):
     timeElapsed = time.time()
     instagram_regex = r"(?P<url>https?://(www\.)?instagram\.com/(p|reel)/[a-zA-Z0-9-_]+)"
@@ -235,7 +234,6 @@ async def ProcessVideoCompression(editMessage, reelOrPost, message, username, fi
         await editMessage.edit(content=f'Uploading compressed video (Attempt #2)...')
     return False
 
-#@timeTakenToCompressVideo
 async def compressVideo(filepath):
     timeElapsed2 = time.time()
     if platform.system() == "Windows":
@@ -253,7 +251,7 @@ async def compressVideo(filepath):
 async def failedToGetVideoKillSwitch(timeElapsed, message, username, editMessage, ghostMode = True):
     await message.channel.send('I could not access the post posted by **' + username + '**. Here is some info about what went wrong:')
     # await message.channel.send('All proxies have either been blocked by Instagram or are unavailable')
-    await message.channel.send("Kill switch activated as the bot's current IP address is suspected to be blocked by Instagram. Please change the bot's IP address.")
+    await message.channel.send("||Kill switch activated as the bot's current IP address is suspected to be blocked by Instagram. Please change the bot's IP address.||")
     await incrementFailedJobCounter(timeElapsed, editMessage)
 
 async def failedToGetVideo(timeElapsed, message, username, ex, editMessage):
