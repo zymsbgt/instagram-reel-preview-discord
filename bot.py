@@ -1,4 +1,4 @@
-# This file is for a complete rewrite of the bot. Production ready.
+# This file is for a complete rewrite of the bot. I recommend using this version of the bot.
 
 import discord
 from urllib.parse import urlparse
