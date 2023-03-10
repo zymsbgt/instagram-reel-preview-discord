@@ -3,3 +3,4 @@
 ffmpeg2pass-*.log
 *.mp4
 .space
+whitelist.txt
