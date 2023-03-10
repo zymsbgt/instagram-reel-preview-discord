@@ -66,7 +66,7 @@ async def on_reaction_add(reaction, user):
                     await tryToSendMessage.delete()
                     await CreatePreview(reaction.message, username, user_message)
             else:
-                await user.send("Hey there, you'll need to purchase the Instagram reel previewer module for me to post Instagram reels on Discord. Get it here: ")
+                await user.send("Hey there, you'll need to purchase the Instagram reel previewer module for me to post Instagram reels on Discord. Get it here: https://ko-fi.com/s/f893c38bf1")
                 print(f'{user} does not have module')
 
 @client.event
@@ -93,8 +93,8 @@ async def on_message(message):
             if str(message.author.id) in whitelist:
                 await CreatePreview(message, username, user_message)
             else:
-                #await message.author.send("Hey there, you'll need to purchase the Instagram reel previewer module for me to post Instagram reels on Discord. Get it here: ")
-                await message.channel.send("Hey there, you'll need to purchase the Instagram reel previewer module for me to post Instagram reels on Discord. Get it here: ")
+                #await message.author.send("Hey there, you'll need to purchase the Instagram reel previewer module for me to post Instagram reels on Discord. Get it here: https://ko-fi.com/s/f893c38bf1")
+                await message.channel.send("Hey there, you'll need to purchase the Instagram reel previewer module for me to post Instagram reels on Discord. Get it here: https://ko-fi.com/s/f893c38bf1")
                 print(f'{message.author} does not have module')
 
 async def CreatePreview(message, username, user_message):
