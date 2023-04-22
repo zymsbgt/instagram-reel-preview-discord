@@ -2,4 +2,5 @@ discord
 python-dotenv
 yt_dlp
 ffmpeg
+requests
 #pycurl
