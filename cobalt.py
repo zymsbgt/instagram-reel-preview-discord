@@ -29,10 +29,13 @@ async def on_message(message):
 
     if "instagram.com" in message.content:
         url = message.content
-        parsed_url = urlparse(url)
+
+        headers = {
+            "Accept": "application/json"
+        }
 
         params = {
-            'url': parsed_url,
+            'url': url,
             'vCodec': 'h264',
             'vQuality': '720',
             'aFormat': 'mp3',
@@ -43,7 +46,7 @@ async def on_message(message):
             'dubLang': 'false'
         }
 
-        response = requests.post(cobalt_url, json=params)
+        response = requests.post(cobalt_url, headers=headers, json=params)
 
         if response.status_code == 200 and response.json().get("status") == "success":
             video_url = response.json().get("url")
