@@ -24,7 +24,39 @@ async def on_ready():
     print('server successfully started as {0.user}'.format(client))
 
 @client.event
+async def on_reaction_add(reaction, user):
+    if user == client.user:
+        return
+
+    for reaction in reaction.message.reactions:
+        if reaction.me:
+            try:
+                tryToSendMessage = await reaction.message.channel.send(f'Attempting to start download...')
+            except Exception as ex:
+                await user.send("It appears that I may not have permission to send the video in the channel. Here's more info on what went wrong:")
+                template = "||{0}||"
+                errorToSend = template.format(ex)
+                await user.send(errorToSend)
+            else:
+                await CreatePreview(reaction.message, tryToSendMessage)
+
+@client.event
 async def on_message(message):
+    isPinged = False
+    
+    if message.author == client.user:
+        return
+    
+    if client.user.mentioned_in(message):
+        isPinged = True
+    
+    if ('instagram.com/p' in message.content) or ('instagram.com/reel' in message.content):
+        if (isPinged == False):
+            await message.add_reaction("⏬")
+        else:
+            await CreatePreview(message)
+
+async def CreatePreview(message, messageToEdit = None):
     if message.author == client.user:
         return
 
@@ -35,7 +67,11 @@ async def on_message(message):
             return
 
         for url in urls:
-            editMessage = await message.channel.send(f"URL found: {url}")
+            if messageToEdit == None:
+                editMessage = await message.channel.send(f"URL found: {url}")
+            else:
+                editMessage = messageToEdit
+                await editMessage.edit(content=f"URL found: {url}")
             parsed_url = urlparse(url)
             url_without_query = urlunparse(parsed_url._replace(query=''))
             await editMessage.edit(content=f"Formatted URL: {url_without_query}. Sending to Cobalt now...")
@@ -44,16 +80,6 @@ async def on_message(message):
                 "Accept": "application/json"
             }
 
-            # params = {
-            #     'url': url,
-            #     'vQuality': '720',
-            #     'aFormat': 'best',
-            #     'isAudioOnly': 'false',
-            #     'isNoTTWatermark': 'false',
-            #     'isTTFullAudio': 'false',
-            #     'isAudioMuted': 'false',
-            #     'dubLang': 'false'
-            # }
             params = {
                 'url': url
             }
@@ -67,6 +93,7 @@ async def on_message(message):
                 response_status = response_data.get("status")
 
                 if (response_status == "redirect"): # Instagram download requests will always be responded with a "redirect"
+                    await editMessage.edit(content=f"Success! Posting link now...")
                     video_url = response_data.get("url")
                     await message.channel.send(video_url)
                     # Replace this section soon with downloading the video itself, and then uploading the media onto the discord channel
