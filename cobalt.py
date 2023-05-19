@@ -44,30 +44,35 @@ async def on_message(message):
                 "Accept": "application/json"
             }
 
+            # params = {
+            #     'url': url,
+            #     'vQuality': '720',
+            #     'aFormat': 'best',
+            #     'isAudioOnly': 'false',
+            #     'isNoTTWatermark': 'false',
+            #     'isTTFullAudio': 'false',
+            #     'isAudioMuted': 'false',
+            #     'dubLang': 'false'
+            # }
             params = {
-                'url': url,
-                'vCodec': 'h264',
-                'vQuality': '720',
-                'aFormat': 'best',
-                'isAudioOnly': 'false',
-                'isNoTTWatermark': 'false',
-                'isTTFullAudio': 'false',
-                'isAudioMuted': 'false',
-                'dubLang': 'false'
+                'url': url
             }
 
             try:
                 response = requests.post(cobalt_url, headers=headers, json=params)
+                # response = requests.post(cobalt_url, headers=headers)
                 response.raise_for_status()
                 response_data = response.json()
+                response_code = response.status_code
+                response_status = response_data.get("status")
 
-                if (response_data.get("status") == "success" or response_data.get("status") == "stream"):
+                if (response_status == "redirect"): # Instagram download requests will always be responded with a "redirect"
                     video_url = response_data.get("url")
                     await message.channel.send(video_url)
+                    # Replace this section soon with downloading the video itself, and then uploading the media onto the discord channel
                 else:
-                    print(response_data.get("status"))
                     response_text = response_data.get("text")
-                    await message.channel.send(f"**Error:** Failed to download video. The download server sent the following message:\n{response_text}")
+                    await message.channel.send(f"**Error:** Failed to download video. The download server sent the following message:\n{response_code} {response_status} {response_text}")
             except requests.exceptions.RequestException as e:
                 print(f"Request error: {e}")
                 await message.channel.send("**Error:** Something went wrong while making the request.")
