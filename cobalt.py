@@ -86,7 +86,6 @@ async def CreatePreview(message, messageToEdit = None):
 
             try:
                 response = requests.post(cobalt_url, headers=headers, json=params)
-                # response = requests.post(cobalt_url, headers=headers)
                 response.raise_for_status()
                 response_data = response.json()
                 response_code = response.status_code
@@ -101,11 +100,9 @@ async def CreatePreview(message, messageToEdit = None):
                     response_text = response_data.get("text")
                     await message.channel.send(f"**Error:** Failed to download video. The download server sent the following message:\n{response_code} {response_status} {response_text}")
             except requests.exceptions.RequestException as e:
-                print(f"Request error: {e}")
-                await message.channel.send("**Error:** Something went wrong while making the request.")
+                await message.channel.send(f"**Request error:** {e}")
             except ValueError as e:
-                print(f"JSON decoding error: {e}")
-                await message.channel.send("**Error:** Something went wrong while decoding the server response.")
+                await message.channel.send(f"JSON decoding error: {e}")
             
             await editMessage.delete()
 
