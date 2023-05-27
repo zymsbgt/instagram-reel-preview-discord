@@ -50,7 +50,7 @@ async def on_message(message):
     if client.user.mentioned_in(message):
         isPinged = True
     
-    if ('instagram.com/p' in message.content) or ('instagram.com/reel' in message.content):
+    if ('instagram.com/reel' in message.content):
         if (isPinged == False):
             await message.add_reaction("⏬")
         else:
@@ -60,7 +60,7 @@ async def CreatePreview(message, messageToEdit = None):
     if message.author == client.user:
         return
 
-    IGPostLinks = ['instagram.com/p', 'instagram.com/reel']
+    IGPostLinks = ['instagram.com/reel']
     if any(keyword in message.content for keyword in IGPostLinks):
         urls = re.findall(r'(https?://(?:www\.)?instagram\.com/(?:p|reel)/\S+)', message.content)
         if not urls:
