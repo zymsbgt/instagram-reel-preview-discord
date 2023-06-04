@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 from urllib.parse import urlparse, urlunparse
 import re
+import secrets
 
 load_dotenv()
 
@@ -38,7 +39,7 @@ async def on_reaction_add(reaction, user):
                 errorToSend = template.format(ex)
                 await user.send(errorToSend)
             else:
-                await CreatePreview(reaction.message, tryToSendMessage)
+                await CreateInstaReelPreview(reaction.message, tryToSendMessage)
 
 @client.event
 async def on_message(message):
@@ -54,17 +55,19 @@ async def on_message(message):
         if (isPinged == False):
             await message.add_reaction("⏬")
         else:
-            await CreatePreview(message)
+            await CreateInstaReelPreview(message)
+    
+    if ('twitter.com/' in message.content):
+        await secrets.CreateBirdsitePreview(message)
 
-async def CreatePreview(message, messageToEdit = None):
-    if message.author == client.user:
-        return
-
+async def CreateInstaReelPreview(message, messageToEdit = None):
     IGPostLinks = ['instagram.com/reel']
     if any(keyword in message.content for keyword in IGPostLinks):
         urls = re.findall(r'(https?://(?:www\.)?instagram\.com/(?:p|reel)/\S+)', message.content)
         if not urls:
             return
+
+        print("Instagram Post detected in message: " + message.content)
 
         for url in urls:
             if messageToEdit == None:
@@ -96,13 +99,17 @@ async def CreatePreview(message, messageToEdit = None):
                     video_url = response_data.get("url")
                     await message.channel.send(video_url)
                     # Replace this section soon with downloading the video itself, and then uploading the media onto the discord channel
+                    print("Job complete!")
                 else:
                     response_text = response_data.get("text")
                     await message.channel.send(f"**Error:** Failed to download video. The download server sent the following message:\n{response_code} {response_status} {response_text}")
+                    print(f"Job failed: {response_code} {response_status} {response_text}")
             except requests.exceptions.RequestException as e:
                 await message.channel.send(f"**Request error:** {e}")
+                print(f"Request error: {e}")
             except ValueError as e:
                 await message.channel.send(f"JSON decoding error: {e}")
+                print(f"JSON decoding error: {e}")
             
             await editMessage.delete()
 
