@@ -1,4 +1,4 @@
-# This file is the second rewrite for this bot, designed to be used with the Cobalt API. This script is still a work in progress.
+# This file is the second rewrite for this bot, designed to be used with the Cobalt API. This script is on production as of May 27
 
 import discord
 import requests
