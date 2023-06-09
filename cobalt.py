@@ -51,7 +51,7 @@ async def on_message(message):
     if client.user.mentioned_in(message):
         isPinged = True
     
-    if ('instagram.com/reel' in message.content):
+    if (('instagram.com/reel' in message.content) or ('instagram.com/p' in message.content)):
         if (isPinged == False):
             await message.add_reaction("⏬")
         else:
@@ -61,6 +61,7 @@ async def on_message(message):
         await secrets.CreateBirdsitePreview(message, isPinged)
 
 async def CreateInstaReelPreview(message, messageToEdit = None):
+    IGLinks = ['instagram.com/reel', 'instagram.com/p']
     if any(keyword in message.content for keyword in 'instagram.com/reel'):
         urls = re.findall(r'(https?://(?:www\.)?instagram\.com/(?:p|reel)/\S+)', message.content)
         if not urls:
