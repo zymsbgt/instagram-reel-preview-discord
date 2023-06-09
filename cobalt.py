@@ -14,7 +14,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-cobalt_url = "https://co.wukko.me/api/json"
+cobalt_url = "https://co.wuk.sh/api/json"
 
 @client.event
 async def on_ready():
@@ -58,16 +58,15 @@ async def on_message(message):
             await CreateInstaReelPreview(message)
     
     if ('twitter.com/' in message.content):
-        await secrets.CreateBirdsitePreview(message)
+        await secrets.CreateBirdsitePreview(message, isPinged)
 
 async def CreateInstaReelPreview(message, messageToEdit = None):
-    IGPostLinks = ['instagram.com/reel']
-    if any(keyword in message.content for keyword in IGPostLinks):
+    if any(keyword in message.content for keyword in 'instagram.com/reel'):
         urls = re.findall(r'(https?://(?:www\.)?instagram\.com/(?:p|reel)/\S+)', message.content)
         if not urls:
             return
 
-        print("Instagram Post detected in message: " + message.content)
+        print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
 
         for url in urls:
             if messageToEdit == None:
@@ -77,7 +76,7 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
                 await editMessage.edit(content=f"URL found: {url}")
             parsed_url = urlparse(url)
             url_without_query = urlunparse(parsed_url._replace(query=''))
-            await editMessage.edit(content=f"Formatted URL: {url_without_query}. Sending to Cobalt now...")
+            await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
 
             headers = {
                 "Accept": "application/json"
@@ -94,7 +93,7 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
                 response_code = response.status_code
                 response_status = response_data.get("status")
 
-                if (response_status == "redirect"): # Instagram download requests will always be responded with a "redirect"
+                if (response_code == requests.codes.ok): # Instagram download requests will always be responded with a "redirect"
                     await editMessage.edit(content=f"Success! Posting link now...")
                     video_url = response_data.get("url")
                     await message.channel.send(video_url)
