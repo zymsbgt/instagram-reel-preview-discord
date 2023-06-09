@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse, urlunparse
 import re
 import secrets
+import io
 
 load_dotenv()
 
@@ -95,10 +96,29 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
                 response_status = response_data.get("status")
 
                 if (response_code == requests.codes.ok): # Instagram download requests will always be responded with a "redirect"
-                    await editMessage.edit(content=f"Success! Posting link now...")
+                    await editMessage.edit(content=f"Success! Downloading video now...")
                     video_url = response_data.get("url")
-                    await message.channel.send(video_url)
-                    # Replace this section soon with downloading the video itself, and then uploading the media onto the discord channel
+                    video_response = requests.get(video_url)
+                    video_bytes = video_response.content
+                    video_bytes_io = io.BytesIO(video_bytes)
+
+                    # Check the file size
+                    video_bytes_io.seek(0, io.SEEK_END)  # Move the file pointer to the end of the buffer
+                    file_size_bytes = video_bytes_io.tell()  # Get the current position, which represents the file size in bytes
+                    file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
+
+                    if file_size_mb <= 25:
+                        # File size is below or equal to 25MB, send the video on Discord
+                        video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
+                        await editMessage.edit(content=f"Download success! Uploading video now...")
+                        try:
+                            await message.channel.send(file=discord.File(video_bytes_io, filename="video.mp4"))
+                        except:
+                            await editMessage.edit(content=f"Upload failed! Sending video link instead...")
+                            await message.channel.send(video_url)
+                    else:
+                        await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
+                        await message.channel.send(video_url)
                     print("Job complete!")
                 else:
                     response_text = response_data.get("text")
