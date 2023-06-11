@@ -15,7 +15,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-cobalt_url = "https://co.wuk.sh/api/json"
+cobalt_url = ["co.wuk.sh","cobalt.fluffy.tools"]
 
 @client.event
 async def on_ready():
@@ -52,7 +52,8 @@ async def on_message(message):
     if client.user.mentioned_in(message):
         isPinged = True
     
-    if (('instagram.com/reel' in message.content) or ('instagram.com/p' in message.content)):
+    TriggerLinks = ['instagram.com/reel', 'instagram.com/p']
+    if any(keyword in message.content for keyword in TriggerLinks):
         if (isPinged == False):
             await message.add_reaction("⏬")
         else:
@@ -63,7 +64,7 @@ async def on_message(message):
 
 async def CreateInstaReelPreview(message, messageToEdit = None):
     IGLinks = ['instagram.com/reel', 'instagram.com/p']
-    if any(keyword in message.content for keyword in 'instagram.com/reel'):
+    if any(keyword in message.content for keyword in IGLinks):
         urls = re.findall(r'(https?://(?:www\.)?instagram\.com/(?:p|reel)/\S+)', message.content)
         if not urls:
             return
@@ -80,58 +81,85 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
             url_without_query = urlunparse(parsed_url._replace(query=''))
             await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
 
-            headers = {
-                "Accept": "application/json"
-            }
+            response = await SendRequestToCobalt(url, editMessage, cobalt_url, message)
 
-            params = {
-                'url': url
-            }
-
-            try:
-                response = requests.post(cobalt_url, headers=headers, json=params)
-                response.raise_for_status()
+            if (response == None):
+                await editMessage.delete()
+                return
+            else:
+                await editMessage.edit(content=f"Success! Downloading video now...")
                 response_data = response.json()
                 response_code = response.status_code
                 response_status = response_data.get("status")
 
-                if (response_code == requests.codes.ok): # Instagram download requests will always be responded with a "redirect"
-                    await editMessage.edit(content=f"Success! Downloading video now...")
-                    video_url = response_data.get("url")
-                    video_response = requests.get(video_url)
-                    video_bytes = video_response.content
-                    video_bytes_io = io.BytesIO(video_bytes)
+                video_url = response_data.get("url")
+                video_response = requests.get(video_url)
+                video_bytes = video_response.content
+                video_bytes_io = io.BytesIO(video_bytes)
 
-                    # Check the file size
-                    video_bytes_io.seek(0, io.SEEK_END)  # Move the file pointer to the end of the buffer
-                    file_size_bytes = video_bytes_io.tell()  # Get the current position, which represents the file size in bytes
-                    file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
+                # Check the file size
+                video_bytes_io.seek(0, io.SEEK_END)  # Move the file pointer to the end of the buffer
+                file_size_bytes = video_bytes_io.tell()  # Get the current position, which represents the file size in bytes
+                file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
 
-                    if file_size_mb <= 25:
-                        # File size is below or equal to 25MB, send the video on Discord
-                        video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
-                        await editMessage.edit(content=f"Download success! Uploading video now...")
-                        try:
-                            await message.channel.send(file=discord.File(video_bytes_io, filename="video.mp4"))
-                        except:
-                            await editMessage.edit(content=f"Upload failed! Sending video link instead...")
-                            await message.channel.send(video_url)
-                    else:
-                        await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
+                if file_size_mb <= 25:
+                    # File size is below or equal to 25MB, send the video on Discord
+                    video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
+                    await editMessage.edit(content=f"Download success! Uploading video now...")
+                    try:
+                        await message.channel.send(file=discord.File(video_bytes_io, filename="video.mp4"))
+                    except:
+                        await editMessage.edit(content=f"Upload failed! Sending video link instead...")
                         await message.channel.send(video_url)
-                    print("Job complete!")
                 else:
-                    response_text = response_data.get("text")
-                    await message.channel.send(f"**Error:** Failed to download video. The download server sent the following message:\n{response_code} {response_status} {response_text}")
-                    print(f"Job failed: {response_code} {response_status} {response_text}")
-            except requests.exceptions.RequestException as e:
-                await message.channel.send(f"**Request error:** {e}")
-                print(f"Request error: {e}")
-            except ValueError as e:
-                await message.channel.send(f"JSON decoding error: {e}")
-                print(f"JSON decoding error: {e}")
+                    await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
+                    await message.channel.send(video_url)
+                print("Job complete!")
             
             await editMessage.delete()
+
+async def SendRequestToCobalt(url, editMessage, cobalt_url, message):
+    errorLogs = []
+    headers = {
+        "Accept": "application/json"
+    }
+    params = {
+        'url': url
+    }
+    ServerCount = 0
+    MaxServerCount = len(cobalt_url)
+
+    while True:
+        if ServerCount >= MaxServerCount:
+            await message.channel.send(f"Error: No successful requests made from any available Cobalt server. Here's what each one of them replied:")
+            for i in errorLogs:
+                await message.channel.send(i)
+            return None
+        
+        try:
+            CobaltServerToUse = "https://" + cobalt_url[ServerCount] + "/api/json"
+            response = requests.post(CobaltServerToUse, headers=headers, json=params)
+            response.raise_for_status()
+            response_code = response.status_code
+
+            if (response_code == requests.codes.ok):
+                return response
+        except requests.exceptions.RequestException as e:
+            # if isinstance(e, requests.exceptions.HTTPError):
+            #     if 400 >= e.response.status_code < 500:
+            #         await message.channel.send(f"Request error: {e}")
+            #         return None
+
+            # Continue with error handling by trying another server
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request error: {e}. Trying another server...")
+            # Log the error
+            errorLogs.append(cobalt_url[ServerCount] + ": " + str(e))
+            ServerCount += 1
+        except ValueError as e:
+            await message.channel.send(f"JSON decoding error: {e}")
+            print(f"JSON decoding error: {e}")
+            # Exit the function, and exit the function
+            return None
 
 token = os.getenv('DISCORD_TOKEN')
 client.run(token)
