@@ -60,7 +60,10 @@ async def on_message(message):
             await CreateInstaReelPreview(message)
     
     if ('twitter.com/' in message.content):
-        await secrets.CreateBirdsitePreview(message, isPinged)
+        try:
+            await secrets.CreateBirdsitePreview(message, isPinged)
+        except:
+            pass
 
 async def CreateInstaReelPreview(message, messageToEdit = None):
     IGLinks = ['instagram.com/reel', 'instagram.com/p']
