@@ -1,4 +1,4 @@
-# This file is the second rewrite for this bot, designed to be used with the Cobalt API. This script is on production as of May 27
+# This file is the second rewrite for this bot, designed to be used with the Cobalt API. This script is on production as of May 27 2023
 
 import discord
 import requests
@@ -15,7 +15,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-cobalt_url = ["co.wuk.sh","cobalt.fluffy.tools"]
+cobalt_url = ["co.wuk.sh","cobalt.fluffy.tools"] # "nl-co.wuk.sh"
 
 @client.event
 async def on_ready():
@@ -87,12 +87,14 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
                 await editMessage.delete()
                 return
             else:
-                await editMessage.edit(content=f"Success! Downloading video now...")
                 response_data = response.json()
                 response_code = response.status_code
-                response_status = response_data.get("status")
 
                 video_url = response_data.get("url")
+
+                print("Successfully got video url:" + video_url)
+                await editMessage.edit(content=f"Successfully got video url:<{video_url}> Downloading video now...")
+
                 video_response = requests.get(video_url)
                 video_bytes = video_response.content
                 video_bytes_io = io.BytesIO(video_bytes)
@@ -120,13 +122,9 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
 
 async def SendRequestToCobalt(url, editMessage, cobalt_url, message):
     errorLogs = []
-    headers = {
-        "Accept": "application/json"
-    }
-    params = {
-        'url': url
-    }
-    ServerCount = 0
+    headers = {"Accept": "application/json"}
+    params = {'url': url}
+    ServerCount = 0 # Do not change. This serves as a counter for the program.
     MaxServerCount = len(cobalt_url)
 
     while True:
@@ -136,28 +134,22 @@ async def SendRequestToCobalt(url, editMessage, cobalt_url, message):
                 await message.channel.send(i)
             return None
         
-        try:
-            CobaltServerToUse = "https://" + cobalt_url[ServerCount] + "/api/json"
-            response = requests.post(CobaltServerToUse, headers=headers, json=params)
-            response.raise_for_status()
+        CobaltServerToUse = "https://" + cobalt_url[ServerCount] + "/api/json"
+        response = requests.post(CobaltServerToUse, headers=headers, json=params)
+
+        if (200 <= response_code < 300):
+            return response
+        elif (400 <= response_code < 599):
+            response_data = response.json()
             response_code = response.status_code
-
-            if (response_code == requests.codes.ok):
-                return response
-        except requests.exceptions.RequestException as e:
-            # if isinstance(e, requests.exceptions.HTTPError):
-            #     if 400 >= e.response.status_code < 500:
-            #         await message.channel.send(f"Request error: {e}")
-            #         return None
-
-            # Continue with error handling by trying another server
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request error: {e}. Trying another server...")
-            # Log the error
-            errorLogs.append(cobalt_url[ServerCount] + ": " + str(e))
+            response_status = response_data.get("status")
+            response_text = response_data.get("text")
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.\nI will now try another server...")
+            errorLogs.append("**" + cobalt_url[ServerCount] + "**: " + str(response_code) + " " + response_status + ":\n" + response_text)
             ServerCount += 1
-        except ValueError as e:
-            await message.channel.send(f"JSON decoding error: {e}")
-            print(f"JSON decoding error: {e}")
+        else:
+            await message.channel.send(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
+            print(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
             # Exit the function, and exit the function
             return None
 
