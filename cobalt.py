@@ -149,12 +149,10 @@ async def SendRequestToCobalt(url, editMessage, cobalt_url, message):
             response_text = response_data.get("text")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.\nI will now try another server...")
             errorLogs.append("**" + cobalt_url[ServerCount] + "**: " + str(response_code) + " " + response_status + ":\n" + response_text)
-            ServerCount += 1
         else:
-            await message.channel.send(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
-            print(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
-            # Exit the function, and exit the function
-            return None
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}** returned an unknown response code")
+            errorLogs.append(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
+        ServerCount += 1
 
 token = os.getenv('DISCORD_TOKEN')
 client.run(token)
