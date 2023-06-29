@@ -15,7 +15,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-cobalt_url = ["co.wuk.sh","cobalt.fluffy.tools"] # "nl-co.wuk.sh"
+cobalt_url = ["co.de4.nodes.geyser.host","co.wuk.sh","cobalt.fluffy.tools"] # "nl-co.wuk.sh"
 
 @client.event
 async def on_ready():
