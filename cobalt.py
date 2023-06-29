@@ -96,7 +96,7 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
                 video_url = response_data.get("url")
 
                 print("Successfully got video url:" + video_url)
-                await editMessage.edit(content=f"Successfully got video url:<{video_url}> Downloading video now...")
+                await editMessage.edit(content=f"Successfully got video url:<{video_url}>\nDownloading video now...")
 
                 video_response = requests.get(video_url)
                 video_bytes = video_response.content
@@ -139,12 +139,12 @@ async def SendRequestToCobalt(url, editMessage, cobalt_url, message):
         
         CobaltServerToUse = "https://" + cobalt_url[ServerCount] + "/api/json"
         response = requests.post(CobaltServerToUse, headers=headers, json=params)
+        response_data = response.json()
+        response_code = response.status_code
 
         if (200 <= response_code < 300):
             return response
         elif (400 <= response_code < 599):
-            response_data = response.json()
-            response_code = response.status_code
             response_status = response_data.get("status")
             response_text = response_data.get("text")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.\nI will now try another server...")
