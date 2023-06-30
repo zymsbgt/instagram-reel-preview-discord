@@ -15,8 +15,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-cobalt_url = ["co.de4.nodes.geyser.host","co.wuk.sh","cobalt.fluffy.tools"] # "nl-co.wuk.sh"
-
 @client.event
 async def on_ready():
     servers = client.guilds
@@ -84,7 +82,7 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
             url_without_query = urlunparse(parsed_url._replace(query=''))
             await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
 
-            response = await SendRequestToCobalt(url, editMessage, cobalt_url, message)
+            response = await SendRequestToCobalt(url, editMessage, message)
 
             if (response == None):
                 await editMessage.delete()
@@ -123,7 +121,8 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
             
             await editMessage.delete()
 
-async def SendRequestToCobalt(url, editMessage, cobalt_url, message):
+async def SendRequestToCobalt(url, editMessage, message):
+    cobalt_url = ["co.wuk.sh","cobalt.fluffy.tools","co.de4.nodes.geyser.host"] # "nl-co.wuk.sh"
     errorLogs = []
     headers = {"Accept": "application/json"}
     params = {'url': url}
@@ -132,9 +131,9 @@ async def SendRequestToCobalt(url, editMessage, cobalt_url, message):
 
     while True:
         if ServerCount >= MaxServerCount:
-            await message.channel.send(f"Error: No successful requests made from any available Cobalt server. Here's what each one of them replied:")
-            for i in errorLogs:
-                await message.channel.send(i)
+            # await message.channel.send(f"Error: No successful requests made from any available Cobalt server. Here's what each one of them replied:")
+            # for i in errorLogs:
+            #     await message.channel.send(i)
             return None
         
         CobaltServerToUse = "https://" + cobalt_url[ServerCount] + "/api/json"
@@ -147,11 +146,12 @@ async def SendRequestToCobalt(url, editMessage, cobalt_url, message):
         elif (400 <= response_code < 599):
             response_status = response_data.get("status")
             response_text = response_data.get("text")
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.\nI will now try another server...")
-            errorLogs.append("**" + cobalt_url[ServerCount] + "**: " + str(response_code) + " " + response_status + ":\n" + response_text)
+            await message.channel.send(f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.")
+            await editMessage.edit(content=f"Trying another server...")
+            # errorLogs.append("**" + cobalt_url[ServerCount] + "**: " + str(response_code) + " " + response_status + ":\n" + response_text)
         else:
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}** returned an unknown response code")
-            errorLogs.append(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
+            # errorLogs.append(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
         ServerCount += 1
 
 token = os.getenv('DISCORD_TOKEN')
