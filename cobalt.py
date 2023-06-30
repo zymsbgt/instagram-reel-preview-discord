@@ -131,9 +131,6 @@ async def SendRequestToCobalt(url, editMessage, message):
 
     while True:
         if ServerCount >= MaxServerCount:
-            # await message.channel.send(f"Error: No successful requests made from any available Cobalt server. Here's what each one of them replied:")
-            # for i in errorLogs:
-            #     await message.channel.send(i)
             return None
         
         CobaltServerToUse = "https://" + cobalt_url[ServerCount] + "/api/json"
@@ -148,10 +145,8 @@ async def SendRequestToCobalt(url, editMessage, message):
             response_text = response_data.get("text")
             await message.channel.send(f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.")
             await editMessage.edit(content=f"Trying another server...")
-            # errorLogs.append("**" + cobalt_url[ServerCount] + "**: " + str(response_code) + " " + response_status + ":\n" + response_text)
         else:
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}** returned an unknown response code")
-            # errorLogs.append(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
         ServerCount += 1
 
 token = os.getenv('DISCORD_TOKEN')
