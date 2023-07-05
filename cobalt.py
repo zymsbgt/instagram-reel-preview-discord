@@ -128,7 +128,8 @@ async def SendRequestToCobalt(url, editMessage, message):
         "nl3-co.wuk.sh",
         "cobalt.fluffy.tools",
         "toro.cobalt.synzr.ru",
-        "co.de4.nodes.geyser.host"
+        "co.de4.nodes.geyser.host",
+        "cobalt.bobby99as.me"
         ]
     errorLogs = []
     headers = {"Accept": "application/json"}
