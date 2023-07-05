@@ -122,7 +122,14 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
             await editMessage.delete()
 
 async def SendRequestToCobalt(url, editMessage, message):
-    cobalt_url = ["co.wuk.sh","cobalt.fluffy.tools","toro.cobalt.synzr.ru","co.de4.nodes.geyser.host"] # "nl-co.wuk.sh"
+    cobalt_url = [
+        "nl-co.wuk.sh",
+        "nl2-co.wuk.sh",
+        "nl3-co.wuk.sh",
+        "cobalt.fluffy.tools",
+        "toro.cobalt.synzr.ru",
+        "co.de4.nodes.geyser.host"
+        ]
     errorLogs = []
     headers = {"Accept": "application/json"}
     params = {'url': url}
