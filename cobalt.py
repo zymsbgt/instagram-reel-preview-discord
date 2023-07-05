@@ -64,68 +64,75 @@ async def on_message(message):
             pass
 
 async def CreateInstaReelPreview(message, messageToEdit = None):
-    IGLinks = ['instagram.com/reel', 'instagram.com/p']
-    if any(keyword in message.content for keyword in IGLinks):
-        urls = re.findall(r'(https?://(?:www\.)?instagram\.com/(?:p|reel)/\S+)', message.content)
-        if not urls:
-            return
-
-        print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
-
-        for url in urls:
-            if messageToEdit == None:
-                editMessage = await message.channel.send(f"URL found: {url}")
-            else:
-                editMessage = messageToEdit
-                await editMessage.edit(content=f"URL found: {url}")
-            parsed_url = urlparse(url)
-            url_without_query = urlunparse(parsed_url._replace(query=''))
-            await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
-
-            response = await SendRequestToCobalt(url, editMessage, message)
-
-            if (response == None):
-                await editMessage.delete()
+    try:
+        IGLinks = ['instagram.com/reel', 'instagram.com/p']
+        if any(keyword in message.content for keyword in IGLinks):
+            urls = re.findall(r"(https?://(?:www\.)?instagram\.com/(?:p|reel)/\S+)", message.content)
+            if not urls:
+                await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
+                if messageToEdit != None:
+                    await messageToEdit.delete()
                 return
-            else:
-                response_data = response.json()
-                response_code = response.status_code
 
-                video_url = response_data.get("url")
+            print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
 
-                print("Successfully got video url:" + video_url)
-                await editMessage.edit(content=f"Successfully got video url:<{video_url}>\nDownloading video now...")
-
-                video_response = requests.get(video_url)
-                video_bytes = video_response.content
-                video_bytes_io = io.BytesIO(video_bytes)
-
-                # Check the file size
-                video_bytes_io.seek(0, io.SEEK_END)  # Move the file pointer to the end of the buffer
-                file_size_bytes = video_bytes_io.tell()  # Get the current position, which represents the file size in bytes
-                file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
-
-                if file_size_mb <= 25:
-                    # File size is below or equal to 25MB, send the video on Discord
-                    video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
-                    await editMessage.edit(content=f"Download success! Uploading video now...")
-                    try:
-                        await message.channel.send(file=discord.File(video_bytes_io, filename="video.mp4"))
-                    except:
-                        await editMessage.edit(content=f"Upload failed! Sending video link instead...")
-                        await message.channel.send(video_url)
+            for url in urls:
+                if messageToEdit == None:
+                    editMessage = await message.channel.send(f"URL found: {url}")
                 else:
-                    await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
-                    await message.channel.send(video_url)
-                print("Job complete!")
-            
-            await editMessage.delete()
+                    editMessage = messageToEdit
+                    await editMessage.edit(content=f"URL found: {url}")
+                parsed_url = urlparse(url)
+                url_without_query = urlunparse(parsed_url._replace(query=''))
+                await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
+
+                response = await SendRequestToCobalt(url, editMessage, message)
+
+                if (response == None):
+                    await editMessage.delete()
+                    return
+                else:
+                    response_data = response.json()
+                    response_code = response.status_code
+
+                    video_url = response_data.get("url")
+
+                    print("Successfully got video url:" + video_url)
+                    await editMessage.edit(content=f"Successfully got video url:<{video_url}>\nDownloading video now...")
+
+                    video_response = requests.get(video_url)
+                    video_bytes = video_response.content
+                    video_bytes_io = io.BytesIO(video_bytes)
+
+                    # Check the file size
+                    video_bytes_io.seek(0, io.SEEK_END)  # Move the file pointer to the end of the buffer
+                    file_size_bytes = video_bytes_io.tell()  # Get the current position, which represents the file size in bytes
+                    file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
+
+                    if file_size_mb <= 25:
+                        # File size is below or equal to 25MB, send the video on Discord
+                        video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
+                        await editMessage.edit(content=f"Download success! Uploading video now...")
+                        try:
+                            await message.channel.send(file=discord.File(video_bytes_io, filename="video.mp4"))
+                        except:
+                            await editMessage.edit(content=f"Upload failed! Sending video link instead...")
+                            await message.channel.send(video_url)
+                    else:
+                        await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
+                        await message.channel.send(video_url)
+                    print("Job complete!")
+                
+                await editMessage.delete()
+    except Exception as e:
+        await message.channel.send(f"Error occured: {e}")
 
 async def SendRequestToCobalt(url, editMessage, message):
     cobalt_url = [
-        "nl-co.wuk.sh",
-        "nl2-co.wuk.sh",
-        "nl3-co.wuk.sh",
+        #"nl-co.wuk.sh",
+        #"nl2-co.wuk.sh",
+        #"nl3-co.wuk.sh",
+        "co.wuk.sh",
         "cobalt.fluffy.tools",
         "toro.cobalt.synzr.ru",
         "co.de4.nodes.geyser.host",
@@ -142,6 +149,7 @@ async def SendRequestToCobalt(url, editMessage, message):
             return None
         
         CobaltServerToUse = "https://" + cobalt_url[ServerCount] + "/api/json"
+        # Add code here to timeout the request after 30s?
         response = requests.post(CobaltServerToUse, headers=headers, json=params)
         response_data = response.json()
         response_code = response.status_code
