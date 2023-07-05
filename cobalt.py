@@ -39,7 +39,7 @@ async def on_reaction_add(reaction, user):
                 errorToSend = template.format(ex)
                 await user.send(errorToSend)
             else:
-                await CreateInstaReelPreview(reaction.message, tryToSendMessage)
+                await CreatePreview(reaction.message, tryToSendMessage)
 
 @client.event
 async def on_message(message):
@@ -54,12 +54,12 @@ async def on_message(message):
     if client.user.mentioned_in(message):
         isPinged = True
     
-    TriggerLinks = ['instagram.com/reel', 'instagram.com/p']
+    TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/']
     if any(keyword in message.content for keyword in TriggerLinks):
         if (isPinged == False):
             await message.add_reaction("⏬")
         else:
-            await CreateInstaReelPreview(message)
+            await CreatePreview(message)
     
     if ('twitter.com/' in message.content):
         try:
@@ -67,37 +67,27 @@ async def on_message(message):
         except:
             pass
 
-async def CreateInstaReelPreview(message, messageToEdit = None):
+async def CreatePreview(message, messageToEdit = None):
     try:
         DebugMode = False
         start_time = time.time()
-        print(message.guild.id)
         if (message.guild.id == 443253214859755522):
             DebugMode = True
         
-        IGLinks = ['instagram.com/reel', 'instagram.com/p']
+        TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/']
         urls = []
 
         # Splitting the message content by whitespace to extract potential links
         words = message.content.split()
 
         for word in words:
-            if any(keyword in word for keyword in IGLinks):
+            if any(keyword in word for keyword in TriggerLinks):
                 urls.append(word)
 
             if not urls:
                 await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
                 return
-
-        # if any(keyword in message.content for keyword in IGLinks):
-            ## This doesn't work for whatever reason anymore. Just returns an empty string even with IG links present
-            # urls = re.findall(r"(https?://(?:www\.)?instagram\.com/(?:p|reel)/\S+)", message.content)
-            # if not urls:
-            #     await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
-            #     if messageToEdit != None:
-            #         await messageToEdit.delete()
-            #     return
-
+        
             print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
 
             for url in urls:
@@ -118,6 +108,7 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
                 else:
                     response_data = response.json()
                     response_code = response.status_code
+                    response_status = response_data.get("status")
 
                     video_url = response_data.get("url")
 
@@ -134,7 +125,7 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
                     file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
 
                     if (DebugMode == True):
-                        InfoMessage = await message.channel.send(f"**Debug:** Instagram request from **{message.author.name}**")
+                        InfoMessage = await message.channel.send(f"**Debug:** Video request from **{message.author.name}**")
                     if file_size_mb <= 25:
                         # File size is below or equal to 25MB, send the video on Discord
                         video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
@@ -144,15 +135,15 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
                             await message.channel.send(file=discord.File(video_bytes_io, filename="video.mp4"))
                         except:
                             await editMessage.edit(content=f"Upload failed! Sending video link instead...")
-                            await message.channel.send(video_url)
+                            await SendLargeMediaHandler(message, video_url, response_status)
                     else:
                         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
-                        await message.channel.send(video_url)
+                        await SendLargeMediaHandler(message, video_url, response_status)
                     end_time = time.time()
                     execution_time = end_time - start_time
                     execution_time_rounded = round(execution_time, 1)
                     print(f"Job complete! ({execution_time_rounded}s)")
-                    await InfoMessage.edit(content=f"**Debug:** Instagram request from **{message.author.name}** ({execution_time_rounded}s)")
+                    await InfoMessage.edit(content=f"**Debug:** Video request from **{message.author.name}** ({execution_time_rounded}s)")
                 
                 await editMessage.delete()
     except Exception as e:
@@ -195,6 +186,12 @@ async def SendRequestToCobalt(url, editMessage, message):
         else:
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}** returned an unknown response code")
         ServerCount += 1
+
+async def SendLargeMediaHandler(message, video_url, response_status):
+    if (response_status == "stream"):
+        await message.channel.send(f"**Error:** Cobalt server returned `stream` status, expected `success` or `redirect`")
+    else:
+        await message.channel.send(video_url)
 
 token = os.getenv('DISCORD_TOKEN')
 client.run(token)
