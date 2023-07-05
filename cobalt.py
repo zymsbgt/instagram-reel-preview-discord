@@ -8,6 +8,7 @@ from urllib.parse import urlparse, urlunparse
 import re
 import secrets
 import io
+import time
 
 load_dotenv()
 
@@ -47,6 +48,9 @@ async def on_message(message):
     if message.author == client.user:
         return
     
+    if (message.guild.id == 612289903769944064): # RoFT Fan Chat
+        return
+    
     if client.user.mentioned_in(message):
         isPinged = True
     
@@ -65,14 +69,34 @@ async def on_message(message):
 
 async def CreateInstaReelPreview(message, messageToEdit = None):
     try:
+        DebugMode = False
+        start_time = time.time()
+        print(message.guild.id)
+        if (message.guild.id == 443253214859755522):
+            DebugMode = True
+        
         IGLinks = ['instagram.com/reel', 'instagram.com/p']
-        if any(keyword in message.content for keyword in IGLinks):
-            urls = re.findall(r"(https?://(?:www\.)?instagram\.com/(?:p|reel)/\S+)", message.content)
+        urls = []
+
+        # Splitting the message content by whitespace to extract potential links
+        words = message.content.split()
+
+        for word in words:
+            if any(keyword in word for keyword in IGLinks):
+                urls.append(word)
+
             if not urls:
                 await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
-                if messageToEdit != None:
-                    await messageToEdit.delete()
                 return
+
+        # if any(keyword in message.content for keyword in IGLinks):
+            ## This doesn't work for whatever reason anymore. Just returns an empty string even with IG links present
+            # urls = re.findall(r"(https?://(?:www\.)?instagram\.com/(?:p|reel)/\S+)", message.content)
+            # if not urls:
+            #     await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
+            #     if messageToEdit != None:
+            #         await messageToEdit.delete()
+            #     return
 
             print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
 
@@ -109,10 +133,13 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
                     file_size_bytes = video_bytes_io.tell()  # Get the current position, which represents the file size in bytes
                     file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
 
+                    if (DebugMode == True):
+                        InfoMessage = await message.channel.send(f"**Debug:** Instagram request from **{message.author.name}**")
                     if file_size_mb <= 25:
                         # File size is below or equal to 25MB, send the video on Discord
                         video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
                         await editMessage.edit(content=f"Download success! Uploading video now...")
+                        
                         try:
                             await message.channel.send(file=discord.File(video_bytes_io, filename="video.mp4"))
                         except:
@@ -121,7 +148,11 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
                     else:
                         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
                         await message.channel.send(video_url)
-                    print("Job complete!")
+                    end_time = time.time()
+                    execution_time = end_time - start_time
+                    execution_time_rounded = round(execution_time, 1)
+                    print(f"Job complete! ({execution_time_rounded}s)")
+                    await InfoMessage.edit(content=f"**Debug:** Instagram request from **{message.author.name}** ({execution_time_rounded}s)")
                 
                 await editMessage.delete()
     except Exception as e:
@@ -129,10 +160,10 @@ async def CreateInstaReelPreview(message, messageToEdit = None):
 
 async def SendRequestToCobalt(url, editMessage, message):
     cobalt_url = [
-        #"nl-co.wuk.sh",
-        #"nl2-co.wuk.sh",
-        #"nl3-co.wuk.sh",
-        "co.wuk.sh",
+        "nl-co.wuk.sh",
+        "nl2-co.wuk.sh",
+        "nl3-co.wuk.sh",
+        #"co.wuk.sh",
         "cobalt.fluffy.tools",
         "toro.cobalt.synzr.ru",
         "co.de4.nodes.geyser.host",
