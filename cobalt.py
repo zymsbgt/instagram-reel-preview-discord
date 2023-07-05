@@ -60,7 +60,7 @@ async def on_message(message):
             await message.add_reaction("⏬")
         else:
             await CreatePreview(message)
-    
+
     if ('twitter.com/' in message.content):
         try:
             await secrets.CreateBirdsitePreview(message, isPinged)
@@ -79,8 +79,10 @@ async def CreatePreview(message, messageToEdit = None):
 
         # Splitting the message content by whitespace to extract potential links
         words = message.content.split()
+        print(words)
 
         for word in words:
+            print(word)
             if any(keyword in word for keyword in TriggerLinks):
                 urls.append(word)
 
@@ -113,7 +115,13 @@ async def CreatePreview(message, messageToEdit = None):
                     video_url = response_data.get("url")
 
                     print("Successfully got video url:" + video_url)
-                    await editMessage.edit(content=f"Successfully got video url:<{video_url}>\nDownloading video now...")
+                    if (response_status == "stream"):
+                        await editMessage.edit(content=f"Hey {message.author.mention}, Your video is ready! Download it here: <{video_url}>\n*This link will only be available for 20 seconds!*")
+                        time.sleep(19)
+                        await editMessage.edit(content=f"Hey {message.author.mention}, Your video is ready! Download it here: *link expired*")
+                        return
+                    else:
+                        await editMessage.edit(content=f"Successfully got video url:<{video_url}>\nDownloading video now...")
 
                     video_response = requests.get(video_url)
                     video_bytes = video_response.content
