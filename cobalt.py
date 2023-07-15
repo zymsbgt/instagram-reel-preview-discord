@@ -142,11 +142,11 @@ async def ProcessVideoCompression(editMessage, message, filepath):
         await editMessage.delete()
         return True
     else:                                   
-        await compressVideo(filepath)
+        await compressVideo(message, filepath)
         await editMessage.edit(content=f'Uploading compressed video...')
     return False
 
-async def compressVideo(filepath):
+async def compressVideo(message, filepath):
     timeElapsed2 = time.time()
     if platform.system() == "Windows":
         output = await asyncio.create_subprocess_exec("discord-video.bat", filepath,stdout=asp.PIPE, stderr=asp.STDOUT,)
@@ -156,6 +156,9 @@ async def compressVideo(filepath):
         await output.stdout.read()
     else:
         print("Compression failed as the script is running on unknown OS. What are you using!?")
+    if (os.path.exists(filepath + '-compressed.mp4') == False):
+        print("Compression process was complete, but output file is absent! It is likely that compression did not succeed.")
+        await message.channel.send("**Warning**: Compression process was complete, but output file is absent! It is likely that compression did not succeed.")
     timeElapsed2 = time.time()-timeElapsed2
     print(f'Compression finished! Time elapsed: {timeElapsed2} seconds')
 
