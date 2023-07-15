@@ -116,50 +116,58 @@ async def CreatePreview(message, messageToEdit = None):
 
                 print("Successfully got video url:" + video_url)
                 if (response_status == "stream"):
-                    await editMessage.edit(content=f"Hey {message.author.name}, Your video is ready! Download it here: <{video_url}>\n*This link will only be available for 20 seconds!*")
-                    time.sleep(19)
-                    await editMessage.edit(content=f"Hey {message.author.name}, Your video is ready! Download it here: *link expired*")
-                    return
+                    await UploadVideoStream(message, editMessage, video_url)
                 else:
-                    await editMessage.edit(content=f"Successfully got video url:<{video_url}>\nDownloading video now...")
-
-                video_response = requests.get(video_url)
-                video_bytes = video_response.content
-                video_bytes_io = io.BytesIO(video_bytes)
-
-                # Check the file size
-                video_bytes_io.seek(0, io.SEEK_END)  # Move the file pointer to the end of the buffer
-                file_size_bytes = video_bytes_io.tell()  # Get the current position, which represents the file size in bytes
-                file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
-
-                if (DebugMode == True):
-                    InfoMessage = await message.channel.send(f"**Debug:** Video request from **{message.author.name}**")
-                if file_size_mb <= 25:
-                    # File size is below or equal to 25MB, send the video on Discord
-                    video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
-                    await editMessage.edit(content=f"Download success! Uploading video now...")
-                    filename = "video.mp4"
-                    content_disposition = video_response.headers.get('Content-Disposition')
-                    if content_disposition is not None:
-                        filename = re.search('filename="(.+)"', content_disposition)[1]
-                    
-                    try:
-                        await message.channel.send(file=discord.File(video_bytes_io, filename=filename))
-                    except:
-                        await editMessage.edit(content=f"Upload failed! Sending video link instead...")
-                        await SendLargeMediaHandler(message, video_url, response_status)
-                else:
-                    await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
-                    await SendLargeMediaHandler(message, video_url, response_status)
-                end_time = time.time()
-                execution_time = end_time - start_time
-                execution_time_rounded = round(execution_time, 1)
-                print(f"Job complete! ({execution_time_rounded}s)")
-                await InfoMessage.edit(content=f"**Debug:** Video request from **{message.author.name}** ({execution_time_rounded}s)")
-            
+                    InfoMessage = await UploadVideo(message, editMessage, DebugMode, video_url)
+                    end_time = time.time()
+                    execution_time = end_time - start_time
+                    execution_time_rounded = round(execution_time, 1)
+                    print(f"Job complete! ({execution_time_rounded}s)")
+                    if (InfoMessage != None):
+                        await InfoMessage.edit(content=f"**Debug:** Video request from **{message.author.name}** ({execution_time_rounded}s)")
             await editMessage.delete()
     except Exception as e:
         await message.channel.send(f"Error occured: {e}")
+
+async def UploadVideoStream(message, editMessage, video_url):
+    await editMessage.edit(content=f"Hey {message.author.name}, Your video is ready! Download it here: <{video_url}>\n*This link will only be available for 20 seconds!*")
+    time.sleep(19)
+
+async def UploadVideo(message, editMessage, DebugMode, video_url):
+    await editMessage.edit(content=f"Successfully got video url:<{video_url}>\nDownloading video now...")
+
+    video_response = requests.get(video_url)
+    video_bytes = video_response.content
+    video_bytes_io = io.BytesIO(video_bytes)
+
+    # Check the file size
+    video_bytes_io.seek(0, io.SEEK_END)  # Move the file pointer to the end of the buffer
+    file_size_bytes = video_bytes_io.tell()  # Get the current position, which represents the file size in bytes
+    file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
+
+    if (DebugMode == True):
+        InfoMessage = await message.channel.send(f"**Debug:** Video request from **{message.author.name}**")
+    if file_size_mb <= 25:
+        # File size is below or equal to 25MB, send the video on Discord
+        video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
+        await editMessage.edit(content=f"Download success! Uploading video now...")
+        filename = "video.mp4"
+        content_disposition = video_response.headers.get('Content-Disposition')
+        if content_disposition is not None:
+            filename = re.search('filename="(.+)"', content_disposition)[1]
+        
+        try:
+            await message.channel.send(file=discord.File(video_bytes_io, filename=filename))
+        except:
+            await editMessage.edit(content=f"Upload failed! Sending video link instead...")
+            await message.channel.send(video_url)
+    else:
+        await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
+        await message.channel.send(video_url)
+    if (DebugMode == True):
+        return InfoMessage
+    else:
+        return None
 
 async def SendRequestToCobalt(url, editMessage, message):
     cobalt_url = [
