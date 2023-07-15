@@ -3,12 +3,15 @@
 import discord
 import requests
 import os
+import platform
 from dotenv import load_dotenv
 from urllib.parse import urlparse, urlunparse
 import re
 import secrets
 import io
 import time
+import asyncio
+import asyncio.subprocess as asp
 
 load_dotenv()
 
@@ -130,6 +133,32 @@ async def CreatePreview(message, messageToEdit = None):
     except Exception as e:
         await message.channel.send(f"Error occured: {e}")
 
+async def ProcessVideoCompression(editMessage, message, filepath):
+    if os.path.exists(filepath + '-compressed.mp4'):
+        if (filepath != 'video-compressed.mp4'):
+            await editMessage.edit(content=f'Found compressed video in cache! Uploading it...')
+    elif os.path.exists(filepath + '-compressing.mp4'):
+        await message.channel.send(f'This video has already been requested and is now processing. Please try again later')
+        await editMessage.delete()
+        return True
+    else:                                   
+        await compressVideo(filepath)
+        await editMessage.edit(content=f'Uploading compressed video...')
+    return False
+
+async def compressVideo(filepath):
+    timeElapsed2 = time.time()
+    if platform.system() == "Windows":
+        output = await asyncio.create_subprocess_exec("discord-video.bat", filepath,stdout=asp.PIPE, stderr=asp.STDOUT,)
+        await output.stdout.read()
+    elif platform.system() == "Linux":
+        output = await asyncio.create_subprocess_exec("bash", "discord-video.sh", filepath,stdout=asp.PIPE, stderr=asp.STDOUT,)
+        await output.stdout.read()
+    else:
+        print("Compression failed as the script is running on unknown OS. What are you using!?")
+    timeElapsed2 = time.time()-timeElapsed2
+    print(f'Compression finished! Time elapsed: {timeElapsed2} seconds')
+
 async def UploadVideoStream(message, editMessage, DebugMode, video_url):
     video_response = requests.get(video_url, stream=True)
     filename = "video.mp4"
@@ -154,11 +183,24 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url):
             await message.channel.send(file=discord.File(filename))
         except:
             await editMessage.edit(content=f"Upload failed! Compressing video...")
-            await message.channel.send("**Compressor Worker**: ffmpeg not found")
+            if (await ProcessVideoCompression(editMessage, message, filename) == True):
+                return
+            filename = filename + '-compressed.mp4'
+            try:
+                await message.channel.send(file=discord.File(filename))
+            except:
+                await message.channel.send("**Error**: Could not upload video")
     else:
         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Compressing video...")
-        await message.channel.send("**Compressor Worker**: ffmpeg not found")
+        if (await ProcessVideoCompression(editMessage, message, filename) == True):
+            return
+        filename = filename + '-compressed.mp4'
+        try:
+            await message.channel.send(file=discord.File(filename))
+        except:
+            await message.channel.send("**Error**: Could not upload video")
 
+    # Comment this line if you would prefer to have a caching system that I inefficiently built. I didn't like how it turned out.
     os.remove(filename)
 
     if (DebugMode == True):
