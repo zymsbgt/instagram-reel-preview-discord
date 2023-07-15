@@ -141,15 +141,17 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url):
         for chunk in video_response.iter_content(chunk_size=1024):
             if chunk:
                 file.write(chunk)
+    
+    file_size_bytes = os.path.getsize(filename)
+    file_size_mb = file_size_bytes / (1024 * 1024)
 
     # Upload the video to Discord
     if (DebugMode == True):
         InfoMessage = await message.channel.send(f"**Debug:** Video request from **{message.author.name}**")
     if file_size_mb <= 25:
-        # File size is below or equal to 25MB, send the video on Discord
         await editMessage.edit(content=f"Download success! Uploading video now...")
         try:
-            await message.channel.send(file=discord.File(video_file))
+            await message.channel.send(file=discord.File(filename))
         except:
             await editMessage.edit(content=f"Upload failed! Compressing video...")
             await message.channel.send("**Compressor Worker**: ffmpeg not found")
