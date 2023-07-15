@@ -54,7 +54,7 @@ async def on_message(message):
     if client.user.mentioned_in(message):
         isPinged = True
     
-    TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/']
+    TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/']
     if any(keyword in message.content for keyword in TriggerLinks):
         if (isPinged == False):
             await message.add_reaction("⏬")
@@ -74,7 +74,7 @@ async def CreatePreview(message, messageToEdit = None):
         if (message.guild.id == 443253214859755522):
             DebugMode = True
         
-        TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/']
+        TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/']
         urls = []
 
         # Splitting the message content by whitespace to extract potential links
@@ -86,74 +86,78 @@ async def CreatePreview(message, messageToEdit = None):
             if any(keyword in word for keyword in TriggerLinks):
                 urls.append(word)
 
-            if not urls:
-                await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
+        if not urls:
+            await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
+            return
+    
+        print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
+
+        for url in urls:
+            if messageToEdit == None:
+                editMessage = await message.channel.send(f"URL found: {url}")
+            else:
+                editMessage = messageToEdit
+                await editMessage.edit(content=f"URL found: {url}")
+            parsed_url = urlparse(url)
+            url_without_query = urlunparse(parsed_url._replace(query=''))
+            await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
+
+            response = await SendRequestToCobalt(url, editMessage, message)
+
+            if (response == None):
+                await editMessage.delete()
                 return
-        
-            print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
+            else:
+                response_data = response.json()
+                response_code = response.status_code
+                response_status = response_data.get("status")
 
-            for url in urls:
-                if messageToEdit == None:
-                    editMessage = await message.channel.send(f"URL found: {url}")
-                else:
-                    editMessage = messageToEdit
-                    await editMessage.edit(content=f"URL found: {url}")
-                parsed_url = urlparse(url)
-                url_without_query = urlunparse(parsed_url._replace(query=''))
-                await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
+                video_url = response_data.get("url")
 
-                response = await SendRequestToCobalt(url, editMessage, message)
-
-                if (response == None):
-                    await editMessage.delete()
+                print("Successfully got video url:" + video_url)
+                if (response_status == "stream"):
+                    await editMessage.edit(content=f"Hey {message.author.name}, Your video is ready! Download it here: <{video_url}>\n*This link will only be available for 20 seconds!*")
+                    time.sleep(19)
+                    await editMessage.edit(content=f"Hey {message.author.name}, Your video is ready! Download it here: *link expired*")
                     return
                 else:
-                    response_data = response.json()
-                    response_code = response.status_code
-                    response_status = response_data.get("status")
+                    await editMessage.edit(content=f"Successfully got video url:<{video_url}>\nDownloading video now...")
 
-                    video_url = response_data.get("url")
+                video_response = requests.get(video_url)
+                video_bytes = video_response.content
+                video_bytes_io = io.BytesIO(video_bytes)
 
-                    print("Successfully got video url:" + video_url)
-                    if (response_status == "stream"):
-                        await editMessage.edit(content=f"Hey {message.author.mention}, Your video is ready! Download it here: <{video_url}>\n*This link will only be available for 20 seconds!*")
-                        time.sleep(19)
-                        await editMessage.edit(content=f"Hey {message.author.mention}, Your video is ready! Download it here: *link expired*")
-                        return
-                    else:
-                        await editMessage.edit(content=f"Successfully got video url:<{video_url}>\nDownloading video now...")
+                # Check the file size
+                video_bytes_io.seek(0, io.SEEK_END)  # Move the file pointer to the end of the buffer
+                file_size_bytes = video_bytes_io.tell()  # Get the current position, which represents the file size in bytes
+                file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
 
-                    video_response = requests.get(video_url)
-                    video_bytes = video_response.content
-                    video_bytes_io = io.BytesIO(video_bytes)
-
-                    # Check the file size
-                    video_bytes_io.seek(0, io.SEEK_END)  # Move the file pointer to the end of the buffer
-                    file_size_bytes = video_bytes_io.tell()  # Get the current position, which represents the file size in bytes
-                    file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
-
-                    if (DebugMode == True):
-                        InfoMessage = await message.channel.send(f"**Debug:** Video request from **{message.author.name}**")
-                    if file_size_mb <= 25:
-                        # File size is below or equal to 25MB, send the video on Discord
-                        video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
-                        await editMessage.edit(content=f"Download success! Uploading video now...")
-                        
-                        try:
-                            await message.channel.send(file=discord.File(video_bytes_io, filename="video.mp4"))
-                        except:
-                            await editMessage.edit(content=f"Upload failed! Sending video link instead...")
-                            await SendLargeMediaHandler(message, video_url, response_status)
-                    else:
-                        await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
+                if (DebugMode == True):
+                    InfoMessage = await message.channel.send(f"**Debug:** Video request from **{message.author.name}**")
+                if file_size_mb <= 25:
+                    # File size is below or equal to 25MB, send the video on Discord
+                    video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
+                    await editMessage.edit(content=f"Download success! Uploading video now...")
+                    filename = "video.mp4"
+                    content_disposition = video_response.headers.get('Content-Disposition')
+                    if content_disposition is not None:
+                        filename = re.search('filename="(.+)"', content_disposition)[1]
+                    
+                    try:
+                        await message.channel.send(file=discord.File(video_bytes_io, filename=filename))
+                    except:
+                        await editMessage.edit(content=f"Upload failed! Sending video link instead...")
                         await SendLargeMediaHandler(message, video_url, response_status)
-                    end_time = time.time()
-                    execution_time = end_time - start_time
-                    execution_time_rounded = round(execution_time, 1)
-                    print(f"Job complete! ({execution_time_rounded}s)")
-                    await InfoMessage.edit(content=f"**Debug:** Video request from **{message.author.name}** ({execution_time_rounded}s)")
-                
-                await editMessage.delete()
+                else:
+                    await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
+                    await SendLargeMediaHandler(message, video_url, response_status)
+                end_time = time.time()
+                execution_time = end_time - start_time
+                execution_time_rounded = round(execution_time, 1)
+                print(f"Job complete! ({execution_time_rounded}s)")
+                await InfoMessage.edit(content=f"**Debug:** Video request from **{message.author.name}** ({execution_time_rounded}s)")
+            
+            await editMessage.delete()
     except Exception as e:
         await message.channel.send(f"Error occured: {e}")
 
