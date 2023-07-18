@@ -31,6 +31,6 @@ ADJUSTED_DURATION=$(printf "%.0f\n" "$DURATION")
 VIDEO_BITRATE=$((MAX_VIDEO_SIZE / ADJUSTED_DURATION))
 #AUDIO_BITRATE=$(echo $((MAX_AUDIO_SIZE / ADJUSTED_DURATION)))
 
-ffmpeg -hide_banner -y -i "$1" -c:v libvpx-vp9 -row-mt 1 -b:v "$VIDEO_BITRATE" -pix_fmt yuv420p -vf scale=720:1080 -pass 1 -an -f null /dev/null && ffmpeg -hide_banner -y -i "$1" -c:v libvpx-vp9 -cpu-used 7 -row-mt 1 -b:v "$VIDEO_BITRATE" -pix_fmt yuv420p -vf scale=720:1080 -pass 2 "$1-compressing.mp4"
+ffmpeg -hide_banner -y -i "$1" -c:v libvpx-vp9 -row-mt 1 -b:v "$VIDEO_BITRATE" -pix_fmt yuv420p -vf scale=1080:720 -pass 1 -an -f null /dev/null && ffmpeg -hide_banner -y -i "$1" -c:v libvpx-vp9 -cpu-used 7 -row-mt 1 -b:v "$VIDEO_BITRATE" -pix_fmt yuv420p -vf scale=720:1080 -pass 2 "$1-compressing.mp4"
 mv "$1-compressing.mp4" "$1-compressed.mp4"
 done
