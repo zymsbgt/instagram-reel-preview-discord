@@ -93,7 +93,7 @@ async def CreatePreview(message, messageToEdit = None, AudioOnly = False):
             DebugMode = True
         
         TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/']
-        urls = []
+        urls = [] # Leave this blank
 
         # Splitting the message content by whitespace to extract potential links
         words = message.content.split()
