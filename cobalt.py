@@ -28,24 +28,33 @@ async def on_ready():
     print('server successfully started as {0.user}'.format(client))
 
 @client.event
-async def on_reaction_add(reaction, user):
-    if user == client.user:
+async def on_raw_reaction_add(payload):
+    if payload.user_id == client.user.id:
         return
 
-    for reaction in reaction.message.reactions:
-        if reaction.me:
+    channel = await client.fetch_channel(payload.channel_id)
+    message = await channel.fetch_message(payload.message_id)
+
+    # Check if the bot has also reacted with the emoji
+    for reaction in message.reactions:
+        if str(reaction.emoji) == str(payload.emoji):
             try:
-                tryToSendMessage = await reaction.message.channel.send(f'Attempting to start download...')
+                tryToSendMessage = await channel.send(f'Attempting to start download...')
             except Exception as ex:
+                user = await client.fetch_user(payload.user_id)
                 await user.send("It appears that I may not have permission to send the video in the channel. Here's more info on what went wrong:")
                 template = "||{0}||"
                 errorToSend = template.format(ex)
                 await user.send(errorToSend)
             else:
-                if reaction.emoji == "🎬":
-                    await CreatePreview(reaction.message, tryToSendMessage)
-                elif reaction.emoji == "🎵":
-                    await CreatePreview(reaction.message, tryToSendMessage, AudioOnly = True)
+                emoji = payload.emoji.name if payload.emoji.is_custom_emoji() else payload.emoji.name
+
+                if emoji == "🎬":
+                    print("Clipboard reacted!")
+                    await CreatePreview(message, tryToSendMessage)
+                elif emoji == "🎵":
+                    print("Music note reacted!")
+                    await CreatePreview(message, tryToSendMessage, AudioOnly=True)
                 else:
                     pass
 
