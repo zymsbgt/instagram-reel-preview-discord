@@ -42,7 +42,12 @@ async def on_reaction_add(reaction, user):
                 errorToSend = template.format(ex)
                 await user.send(errorToSend)
             else:
-                await CreatePreview(reaction.message, tryToSendMessage)
+                if reaction.emoji == "🎬":
+                    await CreatePreview(reaction.message, tryToSendMessage)
+                elif reaction.emoji == "🎵":
+                    await CreatePreview(reaction.message, tryToSendMessage, AudioOnly = True)
+                else:
+                    pass
 
 @client.event
 async def on_message(message):
@@ -60,7 +65,8 @@ async def on_message(message):
     TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/']
     if any(keyword in message.content for keyword in TriggerLinks):
         if (isPinged == False):
-            await message.add_reaction("⏬")
+            await message.add_reaction("🎬")
+            await message.add_reaction("🎵")
         else:
             await CreatePreview(message)
 
@@ -70,7 +76,7 @@ async def on_message(message):
         except:
             pass
 
-async def CreatePreview(message, messageToEdit = None):
+async def CreatePreview(message, messageToEdit = None, AudioOnly = False):
     try:
         DebugMode = False
         start_time = time.time()
@@ -105,7 +111,7 @@ async def CreatePreview(message, messageToEdit = None):
             url_without_query = urlunparse(parsed_url._replace(query=''))
             await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
 
-            response = await SendRequestToCobalt(url, editMessage, message)
+            response = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
 
             if (response == None):
                 await editMessage.delete()
@@ -245,7 +251,7 @@ async def UploadVideo(message, editMessage, DebugMode, video_url):
     else:
         return None
 
-async def SendRequestToCobalt(url, editMessage, message):
+async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     cobalt_url = [
         "nl-co.wuk.sh",
         "nl2-co.wuk.sh",
@@ -258,7 +264,13 @@ async def SendRequestToCobalt(url, editMessage, message):
         ]
     errorLogs = []
     headers = {"Accept": "application/json"}
-    params = {'url': url}
+    if AudioOnly == True:
+        params = {
+            'url': url,
+            'isAudioOnly': 'true'
+            }
+    else:
+        params = {'url': url}
     ServerCount = 0 # Do not change. This serves as a counter for the program.
     MaxServerCount = len(cobalt_url)
 
@@ -282,12 +294,6 @@ async def SendRequestToCobalt(url, editMessage, message):
         else:
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}** returned an unknown response code")
         ServerCount += 1
-
-async def SendLargeMediaHandler(message, video_url, response_status):
-    if (response_status == "stream"):
-        await message.channel.send(f"**Error:** Cobalt server returned `stream` status, expected `success` or `redirect`")
-    else:
-        await message.channel.send(video_url)
 
 token = os.getenv('DISCORD_TOKEN')
 client.run(token)
