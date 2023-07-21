@@ -37,6 +37,7 @@ async def on_raw_reaction_add(payload):
 
     for reaction in message.reactions:
         if (str(reaction.emoji) == str(payload.emoji) and reaction.me):
+            emoji = payload.emoji.name if payload.emoji.is_custom_emoji() else payload.emoji.name
             if (emoji == "🎬" or emoji == "🎵"):
                 try:
                     tryToSendMessage = await channel.send(f'Attempting to start download...')
@@ -47,13 +48,9 @@ async def on_raw_reaction_add(payload):
                     errorToSend = template.format(ex)
                     await user.send(errorToSend)
                 else:
-                    emoji = payload.emoji.name if payload.emoji.is_custom_emoji() else payload.emoji.name
-
                     if emoji == "🎬":
-                        print("Clipboard reacted!")
                         await CreatePreview(message, tryToSendMessage)
                     elif emoji == "🎵":
-                        print("Music note reacted!")
                         await CreatePreview(message, tryToSendMessage, AudioOnly=True)
 
 @client.event
@@ -264,10 +261,14 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         "nl2-co.wuk.sh",
         "nl3-co.wuk.sh",
         #"co.wuk.sh",
+        "co.de4.nodes.geyser.host",
+        # "cobalt.bobby99as.me",
         "cobalt.fluffy.tools",
         "toro.cobalt.synzr.ru",
-        "co.de4.nodes.geyser.host",
-        "cobalt.bobby99as.me"
+        "c0ba.lt",
+        "api.co.749.city",
+        "co-api.orchidmc.me",
+
         ]
     errorLogs = []
     headers = {"Accept": "application/json"}
