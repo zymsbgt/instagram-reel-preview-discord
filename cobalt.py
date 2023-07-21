@@ -257,18 +257,16 @@ async def UploadVideo(message, editMessage, DebugMode, video_url):
 
 async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     cobalt_url = [
-        "nl-co.wuk.sh",
-        "nl2-co.wuk.sh",
-        "nl3-co.wuk.sh",
-        #"co.wuk.sh",
-        "co.de4.nodes.geyser.host",
-        # "cobalt.bobby99as.me",
-        "cobalt.fluffy.tools",
-        "toro.cobalt.synzr.ru",
-        "c0ba.lt",
-        "api.co.749.city",
-        "co-api.orchidmc.me",
-
+        "nl-co.wuk.sh", #0
+        "nl2-co.wuk.sh", #1
+        "nl3-co.wuk.sh", #2
+        "co.de4.nodes.geyser.host", #3
+        "api.cobalt.bobby99as.me:9000", #4, non-SSL instance
+        "cobalt.fluffy.tools", #5
+        "toro.cobalt.synzr.ru", #6
+        "c0ba.lt", #7
+        "api.co.749.city", #8
+        "co-api.orchidmc.me" #9
         ]
     errorLogs = []
     headers = {"Accept": "application/json"}
@@ -286,7 +284,10 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         if ServerCount >= MaxServerCount:
             return None
         
-        CobaltServerToUse = "https://" + cobalt_url[ServerCount] + "/api/json"
+        if ServerCount == 4:
+            CobaltServerToUse = "http://" + cobalt_url[ServerCount] + "/api/json"
+        else:
+            CobaltServerToUse = "https://" + cobalt_url[ServerCount] + "/api/json"
         # Add code here to timeout the request after 30s?
         response = requests.post(CobaltServerToUse, headers=headers, json=params)
         response_data = response.json()
