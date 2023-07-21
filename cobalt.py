@@ -60,7 +60,7 @@ async def on_message(message):
     if message.author == client.user:
         return
     
-    if (message.guild.id == 612289903769944064): # RoFT Fan Chat
+    if message.guild.id == 612289903769944064: # RoFT Fan Chat
         return
     
     if client.user.mentioned_in(message):
@@ -256,18 +256,39 @@ async def UploadVideo(message, editMessage, DebugMode, video_url):
         return None
 
 async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
-    cobalt_url = [
-        "nl-co.wuk.sh", #0
-        "nl2-co.wuk.sh", #1
-        "nl3-co.wuk.sh", #2
-        "co.de4.nodes.geyser.host", #3
-        "api.cobalt.bobby99as.me:9000", #4, non-SSL instance
-        "cobalt.fluffy.tools", #5
-        "toro.cobalt.synzr.ru", #6
-        "c0ba.lt", #7
-        "api.co.749.city", #8
-        "co-api.orchidmc.me" #9
-        ]
+    # If link is Instagram link, use a different order of Cobalt URLs
+    isInstagramLink = False
+    InstagramLinks = ['instagram.com/reel', 'instagram.com/p']
+    if any(keyword in url for keyword in InstagramLinks):
+        isInstagramLink = True
+
+    cobalt_url = []
+    if (isInstagramLink == True):
+        cobalt_url = [
+            "cobalt.fluffy.tools", #0
+            "toro.cobalt.synzr.ru", #1
+            "c0ba.lt", #2
+            "co.de4.nodes.geyser.host", #3
+            "api.cobalt.bobby99as.me:9000", #4, non-SSL instance
+            "api.co.749.city", #5
+            "co-api.orchidmc.me", #6
+            "nl3-co.wuk.sh", #7
+            "nl2-co.wuk.sh", #8
+            "nl-co.wuk.sh" #9
+            ]
+    else:
+        cobalt_url = [
+            "nl-co.wuk.sh", #0
+            "nl2-co.wuk.sh", #1
+            "nl3-co.wuk.sh", #2
+            "co.de4.nodes.geyser.host", #3
+            "api.cobalt.bobby99as.me:9000", #4, non-SSL instance
+            "cobalt.fluffy.tools", #5
+            "toro.cobalt.synzr.ru", #6
+            "c0ba.lt", #7
+            "api.co.749.city", #8
+            "co-api.orchidmc.me" #9
+            ]
     errorLogs = []
     headers = {"Accept": "application/json"}
     if AudioOnly == True:
