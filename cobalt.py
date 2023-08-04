@@ -115,7 +115,7 @@ async def CreatePreview(message, messageToEdit = None, AudioOnly = False):
             url_without_query = urlunparse(parsed_url._replace(query=''))
             await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
 
-            response = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
+            response, ServerRequestCount = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
 
             if (response == None):
                 await editMessage.delete()
@@ -138,7 +138,7 @@ async def CreatePreview(message, messageToEdit = None, AudioOnly = False):
                 execution_time_rounded = round(execution_time, 1)
                 print(f"Job complete! ({execution_time_rounded}s)")
                 if (InfoMessage != None):
-                    await InfoMessage.edit(content=f"**Debug:** Video request from **{message.author.name}** ({execution_time_rounded}s)")
+                    await InfoMessage.edit(content=f"**Debug:** Video request from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
             await editMessage.delete()
     except Exception as e:
         await message.channel.send(f"Error occured: {e}")
@@ -268,12 +268,13 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "cobalt.fluffy.tools", #0
             "toro.cobalt.synzr.ru", #1
             "api.co.749.city", #2
-            "co.de4.nodes.geyser.host", #3
+            "co.wolfdo.gg", #3
             "api.cobalt.bobby99as.me:9000", #4, non-SSL instance
             "co-api.orchidmc.me",
             "lux.api.c0ba.lt",
             "mia.api.c0ba.lt",
             "las.api.c0ba.lt",
+            "nyc.api.c0ba.lt",
             "nl3-co.wuk.sh",
             "nl2-co.wuk.sh",
             "nl-co.wuk.sh"
@@ -283,7 +284,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "nl-co.wuk.sh", #0
             "nl2-co.wuk.sh", #1
             "nl3-co.wuk.sh", #2
-            "co.de4.nodes.geyser.host", #3
+            "co.wolfdo.gg", #3
             "api.cobalt.bobby99as.me:9000", #4, non-SSL instance
             "cobalt.fluffy.tools", #5
             "toro.cobalt.synzr.ru", #6
@@ -291,7 +292,8 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "co-api.orchidmc.me", #8
             "lux.api.c0ba.lt", #9
             "mia.api.c0ba.lt", #10
-            "las.api.c0ba.lt" #11
+            "las.api.c0ba.lt", #11
+            "nyc.api.c0ba.lt" #12
             ]
     errorLogs = []
     headers = {"Accept": "application/json"}
@@ -307,7 +309,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
 
     while True:
         if ServerCount >= MaxServerCount:
-            return None
+            return None, ServerCount
         
         if ServerCount == 4:
             CobaltServerToUse = "http://" + cobalt_url[ServerCount] + "/api/json"
@@ -319,14 +321,13 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         response_code = response.status_code
 
         if (200 <= response_code < 300):
-            return response
+            return response, ServerCount
         elif (400 <= response_code < 599):
             response_status = response_data.get("status")
             response_text = response_data.get("text")
-            await message.channel.send(f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.")
-            await editMessage.edit(content=f"Trying another server...")
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.\nTrying another server...")
         else:
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}** returned an unknown response code")
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}** returned an unknown response code. Trying another server...")
         ServerCount += 1
 
 token = os.getenv('DISCORD_TOKEN')
