@@ -276,24 +276,22 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "las.api.c0ba.lt",
             "nyc.api.c0ba.lt",
             "nl3-co.wuk.sh",
-            "nl2-co.wuk.sh",
-            "nl-co.wuk.sh"
+            "nl2-co.wuk.sh"
             ]
     else:
         cobalt_url = [
-            "nl-co.wuk.sh", #0
-            "nl2-co.wuk.sh", #1
-            "nl3-co.wuk.sh", #2
-            "co.wolfdo.gg", #3
+            "nl2-co.wuk.sh", #0
+            "nl3-co.wuk.sh", #1
+            "co.wolfdo.gg", #2
+            "cobalt.fluffy.tools", #3
             "api.cobalt.bobby99as.me:9000", #4, non-SSL instance
-            "cobalt.fluffy.tools", #5
-            "toro.cobalt.synzr.ru", #6
-            "api.co.749.city", #7
-            "co-api.orchidmc.me", #8
-            "lux.api.c0ba.lt", #9
-            "mia.api.c0ba.lt", #10
-            "las.api.c0ba.lt", #11
-            "nyc.api.c0ba.lt" #12
+            "toro.cobalt.synzr.ru",
+            "api.co.749.city",
+            "co-api.orchidmc.me",
+            "lux.api.c0ba.lt",
+            "mia.api.c0ba.lt",
+            "las.api.c0ba.lt",
+            "nyc.api.c0ba.lt"
             ]
     errorLogs = []
     headers = {"Accept": "application/json"}
