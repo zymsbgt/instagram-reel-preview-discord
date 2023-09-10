@@ -12,6 +12,7 @@ import io
 import time
 import asyncio
 import asyncio.subprocess as asp
+import json
 
 load_dotenv()
 
@@ -118,7 +119,8 @@ async def CreatePreview(message, messageToEdit = None, AudioOnly = False):
             response, ServerRequestCount = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
 
             if (response == None):
-                await editMessage.delete()
+                await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Here's what each one of them responded:")
+                await message.channel.send("Failed to generate error logs")
                 return
             else:
                 response_data = response.json()
@@ -266,11 +268,10 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     if (isInstagramLink == True):
         cobalt_url = [
             "cobalt.fluffy.tools", #0
-            "toro.cobalt.synzr.ru", #1
-            "api.co.749.city", #2
-            "co.wolfdo.gg", #3
+            "api.co.749.city", #1
+            "co.wolfdo.gg", #2
+            "co-api.orchidmc.me", #3
             "api.cobalt.bobby99as.me:9000", #4, non-SSL instance
-            "co-api.orchidmc.me",
             "lux.api.c0ba.lt",
             "mia.api.c0ba.lt",
             "las.api.c0ba.lt",
@@ -285,7 +286,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "co.wolfdo.gg", #2
             "cobalt.fluffy.tools", #3
             "api.cobalt.bobby99as.me:9000", #4, non-SSL instance
-            "toro.cobalt.synzr.ru",
             "api.co.749.city",
             "co-api.orchidmc.me",
             "lux.api.c0ba.lt",
@@ -313,20 +313,37 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             CobaltServerToUse = "http://" + cobalt_url[ServerCount] + "/api/json"
         else:
             CobaltServerToUse = "https://" + cobalt_url[ServerCount] + "/api/json"
+        print(f"Server Count: {ServerCount}")
         # Add code here to timeout the request after 30s?
-        response = requests.post(CobaltServerToUse, headers=headers, json=params)
-        response_data = response.json()
-        response_code = response.status_code
+        try:
+            response = requests.post(CobaltServerToUse, headers=headers, json=params)
+            response_data = response.json()
+            response_code = response.status_code
 
-        if (200 <= response_code < 300):
-            return response, ServerCount
-        elif (400 <= response_code < 599):
-            response_status = response_data.get("status")
-            response_text = response_data.get("text")
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.\nTrying another server...")
-        else:
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}** returned an unknown response code. Trying another server...")
-        ServerCount += 1
+            # Check if the response_data is empty or not
+            if not response_data:
+                await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Empty response. Trying another server...")
+                ServerCount += 1
+                continue
+
+            if (200 <= response_code < 300):
+                return response, ServerCount
+            elif (400 <= response_code < 599):
+                response_status = response_data.get("status")
+                response_text = response_data.get("text")
+                await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.\nTrying another server...")
+            else:
+                await editMessage.edit(content=f"**{cobalt_url[ServerCount]}** returned an unknown response code. Trying another server...")
+        except requests.exceptions.HTTPError as http_err:
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: HTTP error: {http_err}. Trying another server...")
+        except requests.exceptions.RequestException as req_err:
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request error: {req_err}. Trying another server...")
+        except json.JSONDecodeError as json_err:
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}. Trying another server...")
+        except Exception as e:
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: An unexpected error occurred: {e}. Trying another server...")
+        finally:
+            ServerCount += 1
 
 token = os.getenv('DISCORD_TOKEN')
 client.run(token)
