@@ -20,6 +20,8 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
+TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/', 'https://vt.tiktok.com/']
+
 @client.event
 async def on_ready():
     servers = client.guilds
@@ -67,7 +69,7 @@ async def on_message(message):
     if client.user.mentioned_in(message):
         isPinged = True
     
-    TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/']
+    global TriggerLinks
     if any(keyword in message.content for keyword in TriggerLinks):
         if (isPinged == False):
             await message.add_reaction("🎬")
@@ -88,7 +90,7 @@ async def CreatePreview(message, messageToEdit = None, AudioOnly = False):
         if (message.guild.id == 443253214859755522):
             DebugMode = True
         
-        TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/']
+        global TriggerLinks
         urls = [] # Leave this blank
 
         # Splitting the message content by whitespace to extract potential links
