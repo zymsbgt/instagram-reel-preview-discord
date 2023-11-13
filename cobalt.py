@@ -341,6 +341,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: HTTP error: {http_err}. Trying another server...")
         except requests.exceptions.RequestException as req_err:
             print(f"**{cobalt_url[ServerCount]}**: Request error: {req_err}")
+            print(f"Response content: {response.content.decode('utf-8')}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request error: {req_err}. Trying another server...")
         except json.JSONDecodeError as json_err:
             print(f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}")
