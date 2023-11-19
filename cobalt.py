@@ -63,8 +63,9 @@ async def on_message(message):
     if message.author == client.user:
         return
     
-    if message.guild.id == 612289903769944064: # RoFT Fan Chat
-        return
+    if message.guild is not None:
+        if message.guild.id == 612289903769944064: # RoFT Fan Chat
+            return
     
     if client.user.mentioned_in(message):
         isPinged = True
