@@ -20,7 +20,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/', 'https://vt.tiktok.com/']
+TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/', 'vt.tiktok.com/']
 
 @client.event
 async def on_ready():
@@ -268,10 +268,17 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     cobalt_url = []
     if (isInstagramLink == True):
         cobalt_url = [
-            "cobalt.fluffy.tools", #0
-            "api.co.749.city", #1
-            "co.wolfdo.gg", #2
-            "co-api.orchidmc.me", #3
+            "cobalt.fluffy.tools",
+            "api.co.749.city",
+            "co.wolfdo.gg",
+            "co-api.orchidmc.me",
+            "api-dl.cgm.rs",
+            "coapi.bigbenster702.com",
+            "api.co.rooot.gay",
+            "co-api.blueb.me",
+            "us-cobalt.reed.wtf",
+            "capi.oak.li",
+            "downloadapi.stuff.solutions",
             "lux.api.c0ba.lt",
             "mia.api.c0ba.lt",
             "las.api.c0ba.lt",
@@ -281,26 +288,38 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             ]
     else:
         cobalt_url = [
-            "nl2-co.wuk.sh", #0
-            "nl3-co.wuk.sh", #1
-            "co.wolfdo.gg", #2
-            "cobalt.fluffy.tools", #3
+            "nl2-co.wuk.sh",
+            "nl3-co.wuk.sh",
+            "co.wolfdo.gg",
+            "cobalt.fluffy.tools",
             "api.co.749.city",
             "co-api.orchidmc.me",
             "lux.api.c0ba.lt",
             "mia.api.c0ba.lt",
             "las.api.c0ba.lt",
-            "nyc.api.c0ba.lt"
+            "nyc.api.c0ba.lt",
+            "coapi.bigbenster702.com",
+            "api.co.rooot.gay",
+            "co-api.blueb.me",
+            "us-cobalt.reed.wtf",
+            "capi.oak.li",
+            "downloadapi.stuff.solutions"
             ]
     errorLogs = []
     headers = {"Accept": "application/json"}
     if AudioOnly == True:
         params = {
             'url': url,
-            'isAudioOnly': 'true'
+            'isAudioOnly': 'true',
+            'filenamePattern': 'pretty',
+            'disableMetadata': 'true'
             }
     else:
-        params = {'url': url}
+        params = {
+            'url': url,
+            'filenamePattern': 'pretty',
+            'disableMetadata': 'true'
+            }
     ServerCount = 0 # Do not change. This serves as a counter for the program.
     MaxServerCount = len(cobalt_url)
 
