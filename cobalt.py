@@ -269,7 +269,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     cobalt_url = []
     if (isInstagramLink == True):
         cobalt_url = [
-            "cobalt.fluffy.tools",
+            "cobalt.hyper.lol",
             "api.co.749.city",
             "co.wolfdo.gg",
             "co-api.orchidmc.me",
@@ -283,18 +283,13 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "lux.api.c0ba.lt",
             "mia.api.c0ba.lt",
             "las.api.c0ba.lt",
-            "nyc.api.c0ba.lt",
-            "nl3-co.wuk.sh",
-            "nl2-co.wuk.sh"
+            "nyc.api.c0ba.lt"
             ]
     else:
         cobalt_url = [
-            "nl2-co.wuk.sh",
-            "nl3-co.wuk.sh",
             "co.wolfdo.gg",
-            "cobalt.fluffy.tools",
+            "cobalt.hyper.lol",
             "api.co.749.city",
-            "co-api.orchidmc.me",
             "lux.api.c0ba.lt",
             "mia.api.c0ba.lt",
             "las.api.c0ba.lt",
