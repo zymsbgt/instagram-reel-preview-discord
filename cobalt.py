@@ -135,9 +135,9 @@ async def CreatePreview(message, messageToEdit = None, AudioOnly = False):
                 print("Successfully got video url:" + video_url)
                 await editMessage.edit(content=f"Successfully got video url:<{video_url}>\nDownloading video now...")
                 if (response_status == "stream"):
-                    InfoMessage = await UploadVideoStream(message, editMessage, DebugMode, video_url)
+                    InfoMessage = await UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly)
                 else:
-                    InfoMessage = await UploadVideo(message, editMessage, DebugMode, video_url)
+                    InfoMessage = await UploadVideo(message, editMessage, DebugMode, video_urlm, AudioOnly)
                 end_time = time.time()
                 execution_time = end_time - start_time
                 execution_time_rounded = round(execution_time, 1)
@@ -172,14 +172,17 @@ async def compressVideo(message, filepath):
     else:
         print("Compression failed as the script is running on unknown OS. What are you using!?")
     if (os.path.exists(filepath + '-compressed.mp4') == False):
-        print("Compression process was complete, but output file is absent! It is likely that compression did not succeed.")
-        await message.channel.send("**Warning**: Compression process was complete, but output file is absent! It is likely that compression did not succeed.")
+        print("Compression process was marked as complete, but output file is absent! It is likely that compression has failed.")
+        await message.channel.send('**Warning**: Compression failed: No compression module (ffmpeg or handbrake) detected on the bot')
     timeElapsed2 = time.time()-timeElapsed2
     print(f'Compression finished! Time elapsed: {timeElapsed2} seconds')
 
-async def UploadVideoStream(message, editMessage, DebugMode, video_url):
+async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly):
     video_response = requests.get(video_url, stream=True)
-    filename = "video.mp4"
+    if AudioOnly == False:
+        filename = "video.mp4"
+    else:
+        filename = "audio.mp3"
     content_disposition = video_response.headers.get('Content-Disposition')
     if content_disposition is not None:
         filename = re.search('filename="(.+)"', content_disposition)[1]
@@ -203,7 +206,10 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url):
             await editMessage.edit(content=f"Upload failed! Compressing video...")
             if (await ProcessVideoCompression(editMessage, message, filename) == True):
                 return
-            filename = filename + '-compressed.mp4'
+            if AudioOnly == False:
+                filename = filename + '-compressed.mp4'
+            else:
+                filename = filename + '-compressed.mp3'
             try:
                 await message.channel.send(file=discord.File(filename))
             except:
@@ -212,7 +218,10 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url):
         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Compressing video...")
         if (await ProcessVideoCompression(editMessage, message, filename) == True):
             return
-        filename = filename + '-compressed.mp4'
+        if AudioOnly == False:
+            filename = filename + '-compressed.mp4'
+        else:
+            filename = filename + '-compressed.mp3'
         try:
             await message.channel.send(file=discord.File(filename))
         except:
@@ -226,7 +235,7 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url):
     else:
         return None
 
-async def UploadVideo(message, editMessage, DebugMode, video_url):
+async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
     video_response = requests.get(video_url)
     video_bytes = video_response.content
     video_bytes_io = io.BytesIO(video_bytes)
@@ -241,7 +250,10 @@ async def UploadVideo(message, editMessage, DebugMode, video_url):
     if file_size_mb <= 25:
         video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
         await editMessage.edit(content=f"Download success! Uploading video now...")
-        filename = "video.mp4"
+        if AudioOnly == False:
+            filename = "video.mp4"
+        else:
+            filename = "audio.mp3"
         content_disposition = video_response.headers.get('Content-Disposition')
         if content_disposition is not None:
             filename = re.search('filename="(.+)"', content_disposition)[1]
