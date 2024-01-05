@@ -137,7 +137,7 @@ async def CreatePreview(message, messageToEdit = None, AudioOnly = False):
                 if (response_status == "stream"):
                     InfoMessage = await UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly)
                 else:
-                    InfoMessage = await UploadVideo(message, editMessage, DebugMode, video_urlm, AudioOnly)
+                    InfoMessage = await UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly)
                 end_time = time.time()
                 execution_time = end_time - start_time
                 execution_time_rounded = round(execution_time, 1)
@@ -369,7 +369,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         except requests.exceptions.RequestException as req_err:
             print(f"**{cobalt_url[ServerCount]}**: Request error: {req_err}")
             print(f"Response content: {response.content.decode('utf-8')}")
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request error: {req_err}. Trying another server...")
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request blocked by Cloudflare. Trying another server...")
         except json.JSONDecodeError as json_err:
             print(f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}. Trying another server...")
