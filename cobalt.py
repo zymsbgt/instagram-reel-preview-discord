@@ -288,7 +288,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "api-dl.cgm.rs",
             "coapi.bigbenster702.com",
             "api.co.rooot.gay",
-            "co-api.blueb.me",
             "us-cobalt.reed.wtf",
             "capi.oak.li",
             "downloadapi.stuff.solutions",
@@ -308,7 +307,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "nyc.api.c0ba.lt",
             "coapi.bigbenster702.com",
             "api.co.rooot.gay",
-            "co-api.blueb.me",
             "us-cobalt.reed.wtf",
             "capi.oak.li",
             "downloadapi.stuff.solutions"
