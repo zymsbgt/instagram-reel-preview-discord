@@ -37,6 +37,7 @@ async def on_raw_reaction_add(payload):
 
     channel = await client.fetch_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
+    user = await client.fetch_user(payload.user_id)
 
     for reaction in message.reactions:
         if (str(reaction.emoji) == str(payload.emoji) and reaction.me):
@@ -45,16 +46,15 @@ async def on_raw_reaction_add(payload):
                 try:
                     tryToSendMessage = await channel.send(f'Attempting to start download...')
                 except Exception as ex:
-                    user = await client.fetch_user(payload.user_id)
                     await user.send("It appears that I may not have permission to send the video in the channel. Here's more info on what went wrong:")
                     template = "||{0}||"
                     errorToSend = template.format(ex)
                     await user.send(errorToSend)
                 else:
                     if emoji == "🎬":
-                        await CreatePreview(message, tryToSendMessage)
+                        await CreatePreview(message, tryToSendMessage, user)
                     elif emoji == "🎵":
-                        await CreatePreview(message, tryToSendMessage, AudioOnly=True)
+                        await CreatePreview(message, tryToSendMessage, user, AudioOnly=True)
 
 @client.event
 async def on_message(message):
@@ -84,7 +84,7 @@ async def on_message(message):
         except:
             pass
 
-async def CreatePreview(message, messageToEdit = None, AudioOnly = False):
+async def CreatePreview(message, messageToEdit = None, reactedUser = None, AudioOnly = False):
     try:
         DebugMode = False
         start_time = time.time()
@@ -123,7 +123,7 @@ async def CreatePreview(message, messageToEdit = None, AudioOnly = False):
 
             if (response == None):
                 await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Here's what each one of them responded:")
-                await message.channel.send("Failed to generate error logs")
+                await message.channel.send("Failed to print error logs. Check server console.")
                 return
             else:
                 response_data = response.json()
@@ -143,7 +143,11 @@ async def CreatePreview(message, messageToEdit = None, AudioOnly = False):
                 execution_time_rounded = round(execution_time, 1)
                 print(f"Job complete! ({execution_time_rounded}s)")
                 if (InfoMessage != None):
-                    await InfoMessage.edit(content=f"**Debug:** Video request from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                    if (reactedUser != None):
+                        if (message.author.name != reactedUser.name):
+                            await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                    else:
+                        await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
             await editMessage.delete()
     except Exception as e:
         await message.channel.send(f"Error occured: {e}")
@@ -214,7 +218,7 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
                 await message.channel.send(file=discord.File(filename))
             except:
                 await message.channel.send("**Error**: Could not upload video")
-    else:
+    elif file_size_mb <= 20000:
         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Compressing video...")
         if (await ProcessVideoCompression(editMessage, message, filename) == True):
             return
@@ -226,6 +230,9 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
             await message.channel.send(file=discord.File(filename))
         except:
             await message.channel.send("**Error**: Could not upload video")
+    else:
+        await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
+        await message.channel.send(f"**Error**: Could not upload video. Filesize is too large to handle ({file_size_mb} MB)")
 
     # Comment this line if you would prefer to have a caching system that I inefficiently built. I didn't like how it turned out.
     os.remove(filename)
@@ -281,25 +288,17 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     cobalt_url = []
     if (isInstagramLink == True):
         cobalt_url = [
-            "cobalt.hyper.lol",
-            "api.co.749.city",
-            "co.wolfdo.gg",
             "co-api.orchidmc.me",
             "api-dl.cgm.rs",
             "coapi.bigbenster702.com",
             "api.co.rooot.gay",
-            "us-cobalt.reed.wtf",
             "capi.oak.li",
             "downloadapi.stuff.solutions"
             ]
     else:
         cobalt_url = [
-            "co.wolfdo.gg",
-            "cobalt.hyper.lol",
-            "api.co.749.city",
             "coapi.bigbenster702.com",
             "api.co.rooot.gay",
-            "us-cobalt.reed.wtf",
             "capi.oak.li",
             "downloadapi.stuff.solutions"
             ]
