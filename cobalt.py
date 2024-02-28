@@ -143,9 +143,8 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                 execution_time_rounded = round(execution_time, 1)
                 print(f"Job complete! ({execution_time_rounded}s)")
                 if (InfoMessage != None):
-                    if (reactedUser != None):
-                        if (message.author.name != reactedUser.name):
-                            await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                    if ((reactedUser != None) and (message.author.name != reactedUser.name)):
+                        await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
                     else:
                         await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
             await editMessage.delete()
