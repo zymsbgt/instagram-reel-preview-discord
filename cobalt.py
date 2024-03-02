@@ -106,7 +106,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
         if not urls:
             await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
             return
-    
+
         print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
 
         for url in urls:
@@ -288,7 +288,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     if (isInstagramLink == True):
         cobalt_url = [
             "co-api.orchidmc.me",
-            "api-dl.cgm.rs",
             "coapi.bigbenster702.com",
             "api.co.rooot.gay",
             "capi.oak.li"
@@ -352,13 +351,13 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         except requests.exceptions.HTTPError as http_err:
             print(f"**{cobalt_url[ServerCount]}**: HTTP error: {http_err}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: HTTP error: {http_err}. Trying another server...")
+        except requests.exceptions.ConnectionError as conn_err:
+            print(f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}")
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}. Trying another server...")
         except requests.exceptions.RequestException as req_err:
             print(f"**{cobalt_url[ServerCount]}**: Request error: {req_err}")
             print(f"Response content: {response.content.decode('utf-8')}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request blocked by Cloudflare. Trying another server...")
-        except requests.exceptions.ConnectionError as conn_err:
-            print(f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}")
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}. Trying another server...")
         except json.JSONDecodeError as json_err:
             print(f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}. Trying another server...")
