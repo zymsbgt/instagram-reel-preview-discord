@@ -356,6 +356,9 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             print(f"**{cobalt_url[ServerCount]}**: Request error: {req_err}")
             print(f"Response content: {response.content.decode('utf-8')}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request blocked by Cloudflare. Trying another server...")
+        except requests.exceptions.ConnectionError as conn_err:
+            print(f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}")
+            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}. Trying another server...")
         except json.JSONDecodeError as json_err:
             print(f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}. Trying another server...")
