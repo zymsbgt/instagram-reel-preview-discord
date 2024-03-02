@@ -291,15 +291,13 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "api-dl.cgm.rs",
             "coapi.bigbenster702.com",
             "api.co.rooot.gay",
-            "capi.oak.li",
-            "downloadapi.stuff.solutions"
+            "capi.oak.li"
             ]
     else:
         cobalt_url = [
             "coapi.bigbenster702.com",
             "api.co.rooot.gay",
-            "capi.oak.li",
-            "downloadapi.stuff.solutions"
+            "capi.oak.li"
             ]
     errorLogs = []
     headers = {"Accept": "application/json"}
