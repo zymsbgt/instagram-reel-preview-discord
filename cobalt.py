@@ -20,7 +20,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/', 'vt.tiktok.com/']
+TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/', 'vt.tiktok.com/', 'tiktok.com/t', 'twitter.com/', 'soundcloud.com/']
 
 @client.event
 async def on_ready():
@@ -71,12 +71,15 @@ async def on_message(message):
         isPinged = True
     
     global TriggerLinks
-    if any(keyword in message.content for keyword in TriggerLinks):
-        if (isPinged == False):
-            await message.add_reaction("🎬")
-            await message.add_reaction("🎵")
-        else:
-            await CreatePreview(message)
+    for keyword in TriggerLinks:
+        if keyword in message.content:
+            if isPinged:
+                await CreatePreview(message)
+            elif 'soundcloud.com/' in keyword:
+                await message.add_reaction("🎵")
+            else:
+                await message.add_reaction("🎬")
+                await message.add_reaction("🎵")
 
     if ('twitter.com/' in message.content):
         try:
@@ -132,8 +135,13 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
 
                 video_url = response_data.get("url")
 
-                print("Successfully got video url:" + video_url)
-                await editMessage.edit(content=f"Successfully got video url:<{video_url}>\nDownloading video now...")
+                if (AudioOnly):
+                    print("Successfully got audio for url:" + video_url)
+                    await editMessage.edit(content=f"Successfully got audio for url:<{video_url}>\nDownloading audio now...")
+                else:
+                    print("Successfully got video for url:" + video_url)
+                    await editMessage.edit(content=f"Successfully got video for url:<{video_url}>\nDownloading video now...")
+
                 if (response_status == "stream"):
                     InfoMessage = await UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly)
                 else:
@@ -287,6 +295,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     cobalt_url = []
     if (isInstagramLink == True):
         cobalt_url = [
+            "co.wuk.sh",
             "co-api.orchidmc.me",
             "coapi.bigbenster702.com",
             "api.co.rooot.gay",
@@ -294,24 +303,36 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             ]
     else:
         cobalt_url = [
+            "co.wuk.sh",
             "coapi.bigbenster702.com",
             "api.co.rooot.gay",
             "capi.oak.li"
             ]
     errorLogs = []
-    headers = {"Accept": "application/json"}
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": "ZymBot"
+    }
+
+    print(f"User Agent: {requests.get('https://httpbin.org/get', headers=headers).json()['headers']['User-Agent']}")
+
     if AudioOnly == True:
         params = {
             'url': url,
             'isAudioOnly': 'true',
             'filenamePattern': 'pretty',
-            'disableMetadata': 'true'
+            'disableMetadata': 'true',
+            'isNoTTWatermark': 'true',
+            'twitterGif': 'true'
             }
     else:
         params = {
             'url': url,
             'filenamePattern': 'pretty',
-            'disableMetadata': 'true'
+            'disableMetadata': 'true',
+            'isNoTTWatermark': 'true',
+            'twitterGif': 'true'
             }
     ServerCount = 0 # Do not change. This serves as a counter for the program.
     MaxServerCount = len(cobalt_url)
