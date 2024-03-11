@@ -300,14 +300,12 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         cobalt_url = [
             "co.wuk.sh",
             "co-api.orchidmc.me",
-            "coapi.bigbenster702.com",
             "api.co.rooot.gay",
             "capi.oak.li"
             ]
     else:
         cobalt_url = [
             "co.wuk.sh",
-            "coapi.bigbenster702.com",
             "api.co.rooot.gay",
             "capi.oak.li"
             ]
