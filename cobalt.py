@@ -125,11 +125,14 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
         response, ServerRequestCount, errorLogs = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
 
         if (response == None):
-            await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Here's what each one of them responded:")
-            if errorLogs == []:
-                await message.channel.send("Could not send error logs. (errorLogs variable is empty.) Check server console for details.")
-            for i in errorLogs:
-                await message.channel.send(f"{i}")
+            if (DebugMode == True):
+                await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Here's what each one of them responded:")
+                if errorLogs == []:
+                    await message.channel.send("Could not send error logs. (errorLogs variable is empty.) Check server console for details.")
+                for i in errorLogs:
+                    await message.channel.send(f"{i}")
+            else:
+                await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Check the bot console for details.")
             return
         else:
             response_data = response.json()
