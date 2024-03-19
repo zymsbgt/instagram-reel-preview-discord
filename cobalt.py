@@ -313,10 +313,11 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "capi.oak.li"
             ]
     errorLogs = []
+    userAgent = "ZymBot/23.162.136.83.rolling.release GodotEngine/4.2.1.stable.official " + platform.system()
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
-        "User-Agent": "ZymBot"
+        "User-Agent": userAgent
     }
 
     print(f"User Agent: {requests.get('https://httpbin.org/get', headers=headers).json()['headers']['User-Agent']}")
