@@ -212,23 +212,11 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
     # Upload the video to Discord
     if (DebugMode == True):
         InfoMessage = await message.channel.send(f"**Debug:** Video request from **{message.author.name}**")
-    if file_size_mb <= 25:
-        await editMessage.edit(content=f"Download success! Uploading video now...")
-        try:
-            await message.channel.send(file=discord.File(filename))
-        except:
-            await editMessage.edit(content=f"Upload failed! Compressing video...")
-            if (await ProcessVideoCompression(editMessage, message, filename) == True):
-                return
-            if AudioOnly == False:
-                filename = filename + '-compressed.mp4'
-            else:
-                filename = filename + '-compressed.mp3'
-            try:
-                await message.channel.send(file=discord.File(filename))
-            except:
-                await message.channel.send("**Error**: Could not upload video")
-    elif file_size_mb <= 20000:
+    
+    if file_size_mb > 20000:
+        await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
+        await message.channel.send(f"**Error**: Could not upload video. Filesize is too large to handle ({file_size_mb} MB)")
+    elif file_size_mb > 20000:
         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Compressing video...")
         if (await ProcessVideoCompression(editMessage, message, filename) == True):
             return
@@ -241,8 +229,9 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
         except:
             await message.channel.send("**Error**: Could not upload video")
     else:
-        await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
-        await message.channel.send(f"**Error**: Could not upload video. Filesize is too large to handle ({file_size_mb} MB)")
+        await editMessage.edit(content=f"Download success! Uploading video now...")
+        try:
+            await message.channel.send(file=discord.File(filename))
 
     # Comment this line if you would prefer to have a caching system that I inefficiently built. I didn't like how it turned out.
     os.remove(filename)
