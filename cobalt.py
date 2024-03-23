@@ -125,11 +125,14 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
         response, ServerRequestCount, errorLogs = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
 
         if (response == None):
-            await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Here's what each one of them responded:")
-            if errorLogs == []:
-                await message.channel.send("Could not send error logs. (errorLogs variable is empty.) Check server console for details.")
-            for i in errorLogs:
-                await message.channel.send(f"{i}")
+            if (DebugMode == True):
+                await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Here's what each one of them responded:")
+                if errorLogs == []:
+                    await message.channel.send("Could not send error logs. (errorLogs variable is empty.) Check server console for details.")
+                for i in errorLogs:
+                    await message.channel.send(f"{i}")
+            else:
+                await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Check the bot console for details.")
             return
         else:
             response_data = response.json()
@@ -299,10 +302,11 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "capi.oak.li"
             ]
     errorLogs = []
+    userAgent = "ZymBot/23.162.136.83.rolling.release GodotEngine/4.2.1.stable.official " + platform.system()
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
-        "User-Agent": "ZymBot"
+        "User-Agent": userAgent
     }
 
     print(f"User Agent: {requests.get('https://httpbin.org/get', headers=headers).json()['headers']['User-Agent']}")
@@ -342,6 +346,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             if not response_data: # Check if the response_data is empty or not
                 print(f"**{cobalt_url[ServerCount]}**: Empty response.")
                 await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Empty response. Trying another server...")
+                errorLogs.append(f"**{cobalt_url[ServerCount]}**: Empty response.")
                 ServerCount += 1
                 continue
 
@@ -350,7 +355,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
                 if (video_url == None):
                     print(f"**{cobalt_url[ServerCount]}**: Server returned a blank URL. Check if the link contains any videos. This bot does not support downloading images.")
                     await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Server returned a blank URL. Check if the link contains any videos. This bot does not support downloading images.")
-                    errorLogs.append["Server returned a blank URL. Check if the link contains any videos. This bot does not support downloading images."]
+                    errorLogs.append(f"**{cobalt_url[ServerCount]}**: Server returned a blank URL. Check if the link contains any videos. This bot does not support downloading images.")
                     print(errorLogs)
                     ServerCount += 1
                     return None, ServerCount, errorLogs
@@ -361,28 +366,36 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
                 response_text = response_data.get("text")
                 print(f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}")
                 await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.\nTrying another server...")
+                errorLogs.append(f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}")
             else:
                 print(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
                 await editMessage.edit(content=f"**{cobalt_url[ServerCount]}** returned an unknown response code. Trying another server...")
+                errorLogs.appen(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
         except requests.exceptions.Timeout:
             print(f"**{cobalt_url[ServerCount]}**: Request timed out after {timeout} seconds")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request timed out after {timeout} seconds. Trying another server...")
+            errorLogs.append(f"**{cobalt_url[ServerCount]}**: Request timed out after {timeout} seconds")
         except requests.exceptions.HTTPError as http_err:
             print(f"**{cobalt_url[ServerCount]}**: HTTP error: {http_err}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: HTTP error: {http_err}. Trying another server...")
+            errorLogs.append(f"**{cobalt_url[ServerCount]}**: HTTP error: {http_err}")
         except requests.exceptions.ConnectionError as conn_err:
             print(f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}. Trying another server...")
+            errorLogs.append(f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}")
         except requests.exceptions.RequestException as req_err:
             print(f"**{cobalt_url[ServerCount]}**: Request error: {req_err}")
             print(f"Response content: {response.content.decode('utf-8')}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request blocked by Cloudflare. Trying another server...")
+            errorLogs.append(f"**{cobalt_url[ServerCount]}**: Request blocked by Cloudflare.")
         except json.JSONDecodeError as json_err:
             print(f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}. Trying another server...")
+            errorLogs.append(f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}")
         except Exception as e:
             print(f"**{cobalt_url[ServerCount]}**: An unexpected error occurred: {e}")
             await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: An unexpected error occurred: {e}. Trying another server...")
+            errorLogs.append(f"**{cobalt_url[ServerCount]}**: An unexpected error occurred: {e}")
         finally:
             ServerCount += 1
 
