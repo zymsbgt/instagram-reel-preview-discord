@@ -14,6 +14,10 @@ import asyncio
 import asyncio.subprocess as asp
 import json
 
+# S3 related import functions
+import boto3
+from botocore.exceptions import ClientError
+
 load_dotenv()
 
 intents = discord.Intents.default()
@@ -44,7 +48,7 @@ async def on_raw_reaction_add(payload):
             emoji = payload.emoji.name if payload.emoji.is_custom_emoji() else payload.emoji.name
             if (emoji == "🎬" or emoji == "🎵"):
                 try:
-                    tryToSendMessage = await channel.send(f'Attempting to start download...')
+                    tryToSendMessage = await channel.send(f'Starting download...')
                 except Exception as ex:
                     await user.send("It appears that I may not have permission to send the video in the channel. Here's more info on what went wrong:")
                     template = "||{0}||"
@@ -219,22 +223,31 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
     if file_size_mb > 20000:
         await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
         await message.channel.send(f"**Error**: Could not upload video. Filesize is too large to handle ({file_size_mb} MB)")
-    elif file_size_mb > 20000:
-        await editMessage.edit(content=f"Download successful, but video is above filesize limit. Compressing video...")
-        if (await ProcessVideoCompression(editMessage, message, filename) == True):
-            return
-        if AudioOnly == False:
-            filename = filename + '-compressed.mp4'
+    elif file_size_mb > 25:
+        await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
+        # Upload video to MinIO S3 storage
+        minio_url = await upload_to_s3(filename)
+        if minio_url:
+            await message.channel.send(f"{minio_url}")
         else:
-            filename = filename + '-compressed.mp3'
-        try:
-            await message.channel.send(file=discord.File(filename))
-        except:
-            await message.channel.send("**Error**: Could not upload video")
+            await editMessage.edit(content=f"Failed to upload video to S3, compressing video instead...")
+            # Fallback code in case S3 storage is offline (video compression method)
+            if (await ProcessVideoCompression(editMessage, message, filename) == True):
+                return
+            if AudioOnly == False:
+                filename = filename + '-compressed.mp4'
+            else:
+                filename = filename + '-compressed.mp3'
+            try:
+                await message.channel.send(file=discord.File(filename))
+            except:
+                await message.channel.send("**Error**: Could not upload video")
     else:
         await editMessage.edit(content=f"Download success! Uploading video now...")
         try:
             await message.channel.send(file=discord.File(filename))
+        except:
+            await message.channel.send("**Error**: Could not upload video")
 
     # Comment this line if you would prefer to have a caching system that I inefficiently built. I didn't like how it turned out.
     os.remove(filename)
@@ -398,6 +411,34 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             errorLogs.append(f"**{cobalt_url[ServerCount]}**: An unexpected error occurred: {e}")
         finally:
             ServerCount += 1
+
+async def upload_to_s3(filename):
+    # Set up MinIO client
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=os.getenv('S3_ENDPOINT_URL'),
+        aws_access_key_id=os.getenv('S3_ACCESS_KEY'),
+        aws_secret_access_key=os.getenv('S3_SECRET_KEY')
+    )
+
+    # Set MinIO bucket name
+    bucket_name = 'zymbot'
+
+    print("Current directory:", os.getcwd())
+    try:
+        # Upload file to MinIO bucket
+        s3_client.upload_file(filename, bucket_name, filename)
+
+        # Return the URL of the uploaded file
+        return s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': bucket_name, 'Key': filename},
+            ExpiresIn=259200  # URL expiration time in seconds
+        )
+    except ClientError as e:
+        print(f"Error uploading to MinIO: {e}")
+        await editMessage.edit(content=f"Error uploading to MinIO: {e}")
+        return None
 
 token = os.getenv('DISCORD_TOKEN')
 client.run(token)
