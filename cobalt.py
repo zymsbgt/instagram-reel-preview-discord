@@ -92,82 +92,85 @@ async def on_message(message):
             pass
 
 async def CreatePreview(message, messageToEdit = None, reactedUser = None, AudioOnly = False):
-    # try:
-    DebugMode = False
-    start_time = time.time()
-    if (message.guild.id == 443253214859755522):
-        DebugMode = True
-    
-    global TriggerLinks
-    urls = [] # Leave this blank
+    try:
+        DebugMode = False
+        start_time = time.time()
+        if (message.guild.id == 443253214859755522):
+            DebugMode = True
+        
+        global TriggerLinks
+        urls = [] # Leave this blank
 
-    # Splitting the message content by whitespace to extract potential links
-    words = message.content.split()
-    print(words)
+        # Splitting the message content by whitespace to extract potential links
+        words = message.content.split()
+        print(words)
 
-    for word in words:
-        print(word)
-        if any(keyword in word for keyword in TriggerLinks):
-            urls.append(word)
+        for word in words:
+            print(word)
+            if any(keyword in word for keyword in TriggerLinks):
+                urls.append(word)
 
-    if not urls:
-        await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
-        return
-
-    print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
-
-    for url in urls:
-        if messageToEdit == None:
-            editMessage = await message.channel.send(f"URL found: {url}")
-        else:
-            editMessage = messageToEdit
-            await editMessage.edit(content=f"URL found: {url}")
-        parsed_url = urlparse(url)
-        url_without_query = urlunparse(parsed_url._replace(query=''))
-        await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
-
-        response, ServerRequestCount, errorLogs = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
-
-        if (response == None):
-            if (DebugMode == True):
-                await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Here's what each one of them responded:")
-                if errorLogs == []:
-                    await message.channel.send("Could not send error logs. (errorLogs variable is empty.) Check server console for details.")
-                for i in errorLogs:
-                    await message.channel.send(f"{i}")
-            else:
-                await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Check the bot console for details.")
+        if not urls:
+            await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
             return
-        else:
-            response_data = response.json()
-            response_code = response.status_code
-            response_status = response_data.get("status")
 
-            video_url = response_data.get("url")
+        print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
 
-            if (AudioOnly):
-                print(f"Successfully got audio for url: {video_url}")
-                await editMessage.edit(content=f"Successfully got audio for url:<{video_url}>\nDownloading audio now...")
+        for url in urls:
+            # Temporary warning that TikTok links are currently unavailable
+            if "tiktok.com" in url:
+                await message.channel.send("⚠️ Warning: TikTok links are currently under maintenance. Download may fail.")
+            if messageToEdit == None:
+                editMessage = await message.channel.send(f"URL found: {url}")
             else:
-                print(f"Successfully got video for url: {video_url}")
-                await editMessage.edit(content=f"Successfully got video for url:<{video_url}>\nDownloading video now...")
+                editMessage = messageToEdit
+                await editMessage.edit(content=f"URL found: {url}")
+            parsed_url = urlparse(url)
+            url_without_query = urlunparse(parsed_url._replace(query=''))
+            await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
 
-            if (response_status == "stream"):
-                InfoMessage = await UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly)
-            else:
-                InfoMessage = await UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly)
-            end_time = time.time()
-            execution_time = end_time - start_time
-            execution_time_rounded = round(execution_time, 1)
-            print(f"Job complete! ({execution_time_rounded}s)")
-            if (InfoMessage != None):
-                if ((reactedUser != None) and (message.author.name != reactedUser.name)):
-                    await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+            response, ServerRequestCount, errorLogs = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
+
+            if (response == None):
+                if (DebugMode == True):
+                    await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Here's what each one of them responded:")
+                    if errorLogs == []:
+                        await message.channel.send("Could not send error logs. (errorLogs variable is empty.) Check server console for details.")
+                    for i in errorLogs:
+                        await message.channel.send(f"{i}")
                 else:
-                    await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
-        await editMessage.delete()
-    # except Exception as e:
-    #     await message.channel.send(f"Error occured: {e}")
+                    await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Check the bot console for details.")
+                return
+            else:
+                response_data = response.json()
+                response_code = response.status_code
+                response_status = response_data.get("status")
+
+                video_url = response_data.get("url")
+
+                if (AudioOnly):
+                    print(f"Successfully got audio for url: {video_url}")
+                    await editMessage.edit(content=f"Successfully got audio for url:<{video_url}>\nDownloading audio now...")
+                else:
+                    print(f"Successfully got video for url: {video_url}")
+                    await editMessage.edit(content=f"Successfully got video for url:<{video_url}>\nDownloading video now...")
+
+                if (response_status == "stream"):
+                    InfoMessage = await UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly)
+                else:
+                    InfoMessage = await UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly)
+                end_time = time.time()
+                execution_time = end_time - start_time
+                execution_time_rounded = round(execution_time, 1)
+                print(f"Job complete! ({execution_time_rounded}s)")
+                if (InfoMessage != None):
+                    if ((reactedUser != None) and (message.author.name != reactedUser.name)):
+                        await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                    else:
+                        await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+            await editMessage.delete()
+    except Exception as e:
+        await message.channel.send(f"Error occured: {e}")
 
 async def ProcessVideoCompression(editMessage, message, filepath):
     if os.path.exists(filepath + '-compressed.mp4'):
