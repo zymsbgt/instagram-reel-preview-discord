@@ -24,7 +24,26 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-TriggerLinks = ['instagram.com/reel', 'instagram.com/p', 'youtube.com/watch?v=', 'youtu.be/', 'youtube.com/shorts/', 'vt.tiktok.com/', 'tiktok.com/t', 'twitter.com/', 'soundcloud.com/']
+TriggerLinks = [
+    'instagram.com/reel', 
+    'instagram.com/p', 
+    'youtube.com/watch?v=', 
+    'youtu.be/', 
+    'youtube.com/shorts/', 
+    'vt.tiktok.com/', 
+    'tiktok.com/t', 
+    'twitter.com/', 
+    'x.com/', 
+    'soundcloud.com/',
+    'bilibili.com/', # All services from here onwards are untested, but should still work in most circumstances
+    'bilibili.tv/',
+    'dailymotion.com/',
+    'pinterest.com',
+    'reddit.com/',
+    'streamable.com/',
+    'tumblr.com/',
+    'twitch.tv/'
+    ]
 
 @client.event
 async def on_ready():
@@ -117,9 +136,19 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
         print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
 
         for url in urls:
-            # Temporary warning that TikTok links are currently unavailable
-            if "tiktok.com" in url:
-                await message.channel.send("⚠️ Warning: TikTok links are currently under maintenance. Download may fail.")
+            # # Temporary warning that TikTok links are currently unavailable
+            # if "tiktok.com/" in url:
+            #     await message.channel.send("⚠️ Warning: TikTok links are currently under maintenance. Download may fail.")
+
+            # Remove FixTweet/FixUpX
+            if "fxtwitter.com/" in url:
+                url = url.replace('https://fx', 'https://')
+            if "vxtwitter.com/" in url:
+                url = url.replace('https://vx', 'https://')
+            if "fixupx.com/" in url:
+                url = url.replace('https://fixup', 'https://')
+
+            # Set messageToEdit var
             if messageToEdit == None:
                 editMessage = await message.channel.send(f"URL found: {url}")
             else:
