@@ -339,14 +339,18 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             "co-api.orchidmc.me",
             "api.co.rooot.gay",
             "capi.oak.li",
-            "cobalt.synzr.space"
+            "cobalt.synzr.space",
+            "api-cobalt.boykisser.systems",
+            "cobalt.wither.ing"
             ]
     else:
         cobalt_url = [
             "co.wuk.sh",
             "api.co.rooot.gay",
             "capi.oak.li",
-            "cobalt.synzr.space"
+            "cobalt.synzr.space",
+            "api-cobalt.boykisser.systems",
+            "cobalt.wither.ing"
             ]
     errorLogs = []
     userAgent = "ZymBot/23.162.136.83.rolling.release GodotEngine/4.2.1.stable.official " + platform.system()
