@@ -460,7 +460,7 @@ async def upload_to_s3(filename):
     )
 
     # Set MinIO bucket name
-    bucket_name = 'zymbot'
+    bucket_name = os.getenv('S3_BUCKET_NAME')
 
     print("Current directory:", os.getcwd())
     try:
