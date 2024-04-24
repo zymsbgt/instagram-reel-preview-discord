@@ -136,10 +136,6 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
         print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
 
         for url in urls:
-            # # Temporary warning that TikTok links are currently unavailable
-            # if "tiktok.com/" in url:
-            #     await message.channel.send("⚠️ Warning: TikTok links are currently under maintenance. Download may fail.")
-
             # Remove FixTweet/FixUpX
             if "fxtwitter.com/" in url:
                 url = url.replace('https://fx', 'https://')
@@ -326,32 +322,19 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
         return None
 
 async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
-    # If link is Instagram link, use a different order of Cobalt URLs
-    isInstagramLink = False
-    InstagramLinks = ['instagram.com/reel', 'instagram.com/p']
-    if any(keyword in url for keyword in InstagramLinks):
-        isInstagramLink = True
-
-    cobalt_url = []
-    if (isInstagramLink == True):
-        cobalt_url = [
-            "co.wuk.sh",
-            "co-api.orchidmc.me",
-            "api.co.rooot.gay",
-            "capi.oak.li",
-            "cobalt.synzr.space",
-            "api-cobalt.boykisser.systems",
-            "cobalt.wither.ing"
-            ]
-    else:
-        cobalt_url = [
-            "co.wuk.sh",
-            "api.co.rooot.gay",
-            "capi.oak.li",
-            "cobalt.synzr.space",
-            "api-cobalt.boykisser.systems",
-            "cobalt.wither.ing"
-            ]
+    cobalt_url = [
+        "co.wuk.sh",
+        "co-api.orchidmc.me",
+        "api.co.rooot.gay",
+        "capi.oak.li",
+        "cobalt.synzr.space",
+        "api-cobalt.boykisser.systems",
+        "cobalt.wither.ing",
+        "cobalt-api.alexagirl.studio",
+        "api.snaptik.so",
+        "cobaltapi.clebootin.com",
+        "dl01.spotifyloader.com"
+        ]
     errorLogs = []
     userAgent = "ZymBot/23.162.136.83.rolling.release GodotEngine/4.2.1.stable.official " + platform.system()
     headers = {
