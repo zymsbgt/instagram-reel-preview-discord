@@ -7,6 +7,6 @@ A Discord bot that posts Instagram reels (and video posts) onto Discord. <br/><b
 
 ## Prefer to try out the bot first?
 
-You can try out by pinging ZymBot with the link you'd like to download, available on my Discord server: (https://discord.gg/YNRjVvxAXR)
+You can try out by pinging ZymBot with the link you'd like to download, available on my Discord server: (https://zym.lol/discord)
 
-If you'd like a managed hosted version of the bot I operate invited to your Discord server, please contact me. (https://linktr.ee/zymsb)
+If you'd like a managed hosted version of the bot I operate invited to your Discord server, please contact me. (https://link.zym.lol)
