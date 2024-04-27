@@ -97,7 +97,7 @@ async def on_message(message):
     for keyword in TriggerLinks:
         if keyword in message.content:
             if isPinged:
-                await CreatePreview(message)
+                await CreatePreview(message, None)
             elif 'soundcloud.com/' in keyword:
                 await message.add_reaction("🎵")
             else:
@@ -114,7 +114,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
     try:
         DebugMode = False
         start_time = time.time()
-        if (message.guild.id == 443253214859755522):
+        if message.guild is not None and message.guild.id == 443253214859755522:
             DebugMode = True
         
         global TriggerLinks
@@ -133,7 +133,8 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
             await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
             return
 
-        print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
+        if DebugMode == True:
+            print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
 
         for url in urls:
             # Remove FixTweet/FixUpX
