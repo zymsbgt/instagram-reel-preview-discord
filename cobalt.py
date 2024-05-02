@@ -333,7 +333,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         "cobalt.wither.ing",
         "cobalt-api.alexagirl.studio",
         "api.snaptik.so",
-        "cobaltapi.clebootin.com",
         "dl01.spotifyloader.com"
         ]
     errorLogs = []
