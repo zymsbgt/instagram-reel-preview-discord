@@ -322,7 +322,9 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
 async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     cobalt_url = [
         "co.wuk.sh",
-        "co-api.orchidmc.me",
+        "cobalt-uk.programowanie.fun",
+        "cobalt-us.programowanie.fun",
+        "cobalt-br.programowanie.fun",
         "api.co.rooot.gay",
         "capi.oak.li",
         "cobalt.synzr.space",
