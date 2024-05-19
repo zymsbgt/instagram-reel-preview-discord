@@ -15,6 +15,7 @@ import asyncio.subprocess as asp
 import json
 import boto3
 from botocore.exceptions import ClientError
+import random
 
 load_dotenv()
 
@@ -332,7 +333,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         "cobalt.wither.ing",
         "cobalt-api.alexagirl.studio",
         "api.snaptik.so",
-        "cobaltapi.clebootin.com",
         "dl01.spotifyloader.com",
         "co.eepy.today",
         "cobalt-api.schizo.city"
@@ -365,6 +365,10 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             'twitterGif': 'true'
             }
     ServerCount = 0 # Do not change. This serves as a counter for the program.
+    # TODO: Pick main instance + 4 instances at random to download videos from
+    #servers_to_query = ["https://co.wuk.sh/api/json"] + random.sample(["https://" + server + "/api/json" for server in cobalt_url if server != "co.wuk.sh"], k=4)
+    
+
     MaxServerCount = len(cobalt_url)
 
     while True:
