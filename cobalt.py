@@ -157,9 +157,9 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
 
             if (response == None):
                 if (DebugMode == True):
-                    await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Here's what each one of them responded:")
+                    await editMessage.edit(content=f"Requests to a randomly selected pool of {(ServerRequestCount)} Cobalt servers to download the content were unsuccessful. Here's what each one of them replied:")
                     if errorLogs == []:
-                        await message.channel.send("Could not send error logs. (errorLogs variable is empty.) Check server console for details.")
+                        await message.channel.send("Could not send error logs. (errorLogs variable is empty [more likely] or missing permissions [less likely]) Check server console for details.")
                     for i in errorLogs:
                         await message.channel.send(f"{i}")
                 else:
@@ -328,7 +328,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         "cobalt-br.programowanie.fun",
         "api.co.rooot.gay",
         "capi.oak.li",
-        "cobalt.synzr.space",
         "api-cobalt.boykisser.systems",
         "cobalt.wither.ing",
         "cobalt-api.alexagirl.studio",
@@ -364,19 +363,11 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             'isNoTTWatermark': 'true',
             'twitterGif': 'true'
             }
-    ServerCount = 0 # Do not change. This serves as a counter for the program.
+    ServerCount = 0 # Do not modify this. It is for the bot to keep track of which server it's on
     # TODO: Pick main instance + 4 instances at random to download videos from
-    #servers_to_query = ["https://co.wuk.sh/api/json"] + random.sample(["https://" + server + "/api/json" for server in cobalt_url if server != "co.wuk.sh"], k=4)
-    
-
-    MaxServerCount = len(cobalt_url)
-
-    while True:
-        if ServerCount >= MaxServerCount:
-            return None, ServerCount, errorLogs
-        
-        CobaltServerToUse = "https://" + cobalt_url[ServerCount] + "/api/json"
-        print(f"Server Count: {ServerCount}")
+    servers_to_query = ["https://co.wuk.sh/api/json"] + random.sample(["https://" + server + "/api/json" for server in cobalt_url if server != "co.wuk.sh"], k=4)
+    for CobaltServerToUse in servers_to_query:
+        print(f"Server to query: {CobaltServerToUse}")
         timeout = 20
         try:
             response = requests.post(CobaltServerToUse, headers=headers, json=params, timeout=timeout)
@@ -384,18 +375,18 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             response_code = response.status_code
 
             if not response_data: # Check if the response_data is empty or not
-                print(f"**{cobalt_url[ServerCount]}**: Empty response.")
-                await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Empty response. Trying another server...")
-                errorLogs.append(f"**{cobalt_url[ServerCount]}**: Empty response.")
+                print(f"**{CobaltServerToUse}**: Empty response.")
+                await editMessage.edit(content=f"**{CobaltServerToUse}**: Empty response. Trying another server...")
+                errorLogs.append(f"**{CobaltServerToUse}**: Empty response.")
                 ServerCount += 1
                 continue
 
             if (200 <= response_code < 300):
                 video_url = response_data.get("url")
                 if (video_url == None):
-                    print(f"**{cobalt_url[ServerCount]}**: Server returned a blank URL. Check if the link contains any videos. This bot does not support downloading images.")
-                    await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Server returned a blank URL. Check if the link contains any videos. This bot does not support downloading images.")
-                    errorLogs.append(f"**{cobalt_url[ServerCount]}**: Server returned a blank URL. Check if the link contains any videos. This bot does not support downloading images.")
+                    print(f"**{CobaltServerToUse}**: Server returned a blank URL. Check if the link contains any videos. This bot does not support downloading images.")
+                    await editMessage.edit(content=f"**{CobaltServerToUse}**: Server returned a blank URL. Check if the link contains any videos. This bot does not support downloading images.")
+                    errorLogs.append(f"**{CobaltServerToUse}**: Server returned a blank URL. Check if the link contains any videos. This bot does not support downloading images.")
                     print(errorLogs)
                     ServerCount += 1
                     return None, ServerCount, errorLogs
@@ -404,40 +395,42 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             elif (400 <= response_code < 599):
                 response_status = response_data.get("status")
                 response_text = response_data.get("text")
-                print(f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}")
-                await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}.\nTrying another server...")
-                errorLogs.append(f"**{cobalt_url[ServerCount]}**: {response_code} {response_status}:\n{response_text}")
+                print(f"**{CobaltServerToUse}**: {response_code} {response_status}:\n{response_text}")
+                await editMessage.edit(content=f"**{CobaltServerToUse}**: {response_code} {response_status}:\n{response_text}.\nTrying another server...")
+                errorLogs.append(f"**{CobaltServerToUse}**: {response_code} {response_status}:\n{response_text}")
             else:
-                print(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
-                await editMessage.edit(content=f"**{cobalt_url[ServerCount]}** returned an unknown response code. Trying another server...")
-                errorLogs.appen(f"**{cobalt_url[ServerCount]}** returned an unknown response code")
+                print(f"**{CobaltServerToUse}** returned an unknown response code")
+                await editMessage.edit(content=f"**{CobaltServerToUse}** returned an unknown response code. Trying another server...")
+                errorLogs.appen(f"**{CobaltServerToUse}** returned an unknown response code")
         except requests.exceptions.Timeout:
-            print(f"**{cobalt_url[ServerCount]}**: Request timed out after {timeout} seconds")
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request timed out after {timeout} seconds. Trying another server...")
-            errorLogs.append(f"**{cobalt_url[ServerCount]}**: Request timed out after {timeout} seconds")
+            print(f"**{CobaltServerToUse}**: Request timed out after {timeout} seconds")
+            await editMessage.edit(content=f"**{CobaltServerToUse}**: Request timed out after {timeout} seconds. Trying another server...")
+            errorLogs.append(f"**{CobaltServerToUse}**: Request timed out after {timeout} seconds")
         except requests.exceptions.HTTPError as http_err:
-            print(f"**{cobalt_url[ServerCount]}**: HTTP error: {http_err}")
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: HTTP error: {http_err}. Trying another server...")
-            errorLogs.append(f"**{cobalt_url[ServerCount]}**: HTTP error: {http_err}")
+            print(f"**{CobaltServerToUse}**: HTTP error: {http_err}")
+            await editMessage.edit(content=f"**{CobaltServerToUse}**: HTTP error: {http_err}. Trying another server...")
+            errorLogs.append(f"**{CobaltServerToUse}**: HTTP error: {http_err}")
         except requests.exceptions.ConnectionError as conn_err:
-            print(f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}")
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}. Trying another server...")
-            errorLogs.append(f"**{cobalt_url[ServerCount]}**: Connection error: {conn_err}")
+            print(f"**{CobaltServerToUse}**: Connection error: {conn_err}")
+            await editMessage.edit(content=f"**{CobaltServerToUse}**: Connection error: {conn_err}. Trying another server...")
+            errorLogs.append(f"**{CobaltServerToUse}**: Connection error: {conn_err}")
         except requests.exceptions.RequestException as req_err:
-            print(f"**{cobalt_url[ServerCount]}**: Request error: {req_err}")
+            print(f"**{CobaltServerToUse}**: Request error: {req_err}")
             print(f"Response content: {response.content.decode('utf-8')}")
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: Request blocked by Cloudflare. Trying another server...")
-            errorLogs.append(f"**{cobalt_url[ServerCount]}**: Request blocked by Cloudflare.")
+            await editMessage.edit(content=f"**{CobaltServerToUse}**: Request blocked by Cloudflare. Trying another server...")
+            errorLogs.append(f"**{CobaltServerToUse}**: Request blocked by Cloudflare.")
         except json.JSONDecodeError as json_err:
-            print(f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}")
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}. Trying another server...")
-            errorLogs.append(f"**{cobalt_url[ServerCount]}**: JSON decoding error: {json_err}")
+            print(f"**{CobaltServerToUse}**: JSON decoding error: {json_err}")
+            await editMessage.edit(content=f"**{CobaltServerToUse}**: JSON decoding error: {json_err}. Trying another server...")
+            errorLogs.append(f"**{CobaltServerToUse}**: JSON decoding error: {json_err}")
         except Exception as e:
-            print(f"**{cobalt_url[ServerCount]}**: An unexpected error occurred: {e}")
-            await editMessage.edit(content=f"**{cobalt_url[ServerCount]}**: An unexpected error occurred: {e}. Trying another server...")
-            errorLogs.append(f"**{cobalt_url[ServerCount]}**: An unexpected error occurred: {e}")
+            print(f"**{CobaltServerToUse}**: An unexpected error occurred: {e}")
+            await editMessage.edit(content=f"**{CobaltServerToUse}**: An unexpected error occurred: {e}. Trying another server...")
+            errorLogs.append(f"**{CobaltServerToUse}**: An unexpected error occurred: {e}")
         finally:
+            print(f"{CobaltServerToUse} could not obtain video. Trying another server...")
             ServerCount += 1
+    return None, ServerCount, errorLogs
 
 async def upload_to_s3(filename):
     # Set up MinIO client
