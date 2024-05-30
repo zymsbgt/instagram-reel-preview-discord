@@ -101,11 +101,11 @@ async def on_message(message):
                 await message.add_reaction("🎬")
                 await message.add_reaction("🎵")
 
-    if ('twitter.com/' in message.content):
-        try:
-            await secrets.CreateBirdsitePreview(message, isPinged)
-        except:
-            pass
+    # if ('twitter.com/' in message.content):
+    #     try:
+    #         await secrets.CreateBirdsitePreview(message, isPinged)
+    #     except:
+    #         pass
 
 async def CreatePreview(message, messageToEdit = None, reactedUser = None, AudioOnly = False):
     try:
@@ -321,7 +321,7 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
 
 async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     cobalt_url = [
-        "co.wuk.sh",
+        "api.cobalt.tools",
         "cobalt-uk.programowanie.fun",
         "cobalt-us.programowanie.fun",
         "cobalt-br.programowanie.fun",
