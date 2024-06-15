@@ -98,6 +98,8 @@ async def on_message(message):
                 await CreatePreview(message, None)
             elif 'soundcloud.com/' in keyword:
                 await message.add_reaction("🎵")
+            elif 'x.com' in keyword or 'twitter.com' in keyword:
+                pass
             else:
                 await message.add_reaction("🎬")
                 await message.add_reaction("🎵")
