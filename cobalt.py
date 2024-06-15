@@ -334,10 +334,11 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         "api.snaptik.so",
         "dl01.spotifyloader.com",
         "co.eepy.today",
-        "cobalt-api.schizo.city"
+        "cobalt-api.schizo.city",
+        "dl.khyernet.xyz"
         ]
     errorLogs = []
-    userAgent = "ZymBot/23.162.136.83.rolling.release GodotEngine/4.2.1.stable.official " + platform.system()
+    userAgent = "ZymBot/23.162.136.83.rolling.release GodotEngine/4.2.2.stable.official " + platform.system()
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -364,7 +365,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             'twitterGif': 'true'
             }
     ServerCount = 0 # Do not modify this. It is for the bot to keep track of which server it's on
-    # TODO: Pick main instance + 4 instances at random to download videos from
     servers_to_query = ["https://co.wuk.sh/api/json"] + random.sample(["https://" + server + "/api/json" for server in cobalt_url if server != "co.wuk.sh"], k=4)
     for CobaltServerToUse in servers_to_query:
         print(f"Server to query: {CobaltServerToUse}")
