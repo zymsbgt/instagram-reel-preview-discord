@@ -2,7 +2,7 @@
 
 import discord
 from urllib.parse import urlparse
-import yt_dlp
+# import yt_dlp
 import ffmpeg
 import os
 import platform
