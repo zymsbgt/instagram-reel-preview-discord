@@ -114,7 +114,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
     try:
         DebugMode = False
         start_time = time.time()
-        if message.guild is None or message.guild.id == 443253214859755522:
+        if message.guild is not None and message.guild.id == 443253214859755522:
             DebugMode = True
         
         global TriggerLinks
@@ -157,15 +157,15 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
 
             response, ServerRequestCount, errorLogs = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
 
-            if (response == None):
-                if (DebugMode == True):
+            if response == None:
+                if DebugMode == True or message.guild is None:
                     await editMessage.edit(content=f"Requests to a randomly selected pool of {(ServerRequestCount)} Cobalt servers to download the content were unsuccessful. Here's what each one of them replied:")
                     if errorLogs == []:
                         await message.channel.send("Could not send error logs. (errorLogs variable is empty [more likely] or missing permissions [less likely]) Check server console for details.")
                     for i in errorLogs:
                         await message.channel.send(f"{i}")
                 else:
-                    await editMessage.edit(content=f"Requests to all {(ServerRequestCount + 1)} Cobalt servers were unsuccessful. Check the bot console for details.")
+                    await editMessage.edit(content=f"Requests to all {(ServerRequestCount)} Cobalt servers were unsuccessful. Check the bot console for details.")
                 return
             else:
                 response_data = response.json()
