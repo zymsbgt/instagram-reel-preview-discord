@@ -114,7 +114,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
     try:
         DebugMode = False
         start_time = time.time()
-        if message.guild is not None and message.guild.id == 443253214859755522:
+        if message.guild is None or message.guild.id == 443253214859755522:
             DebugMode = True
         
         global TriggerLinks
@@ -325,9 +325,8 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
 async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     cobalt_url = [
         "api.cobalt.tools",
-        "cobalt-uk.programowanie.fun",
-        "cobalt-us.programowanie.fun",
-        "cobalt-br.programowanie.fun",
+        "cobalt-uk.programowanie.fun", # may potentally have cloudflare, remove if found
+        "cobalt-br.programowanie.fun", # may potentally have cloudflare, remove if found
         "api.co.rooot.gay",
         "capi.oak.li",
         "api-cobalt.boykisser.systems",
