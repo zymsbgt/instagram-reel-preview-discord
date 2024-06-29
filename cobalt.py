@@ -94,7 +94,7 @@ async def on_message(message):
     global TriggerLinks
     for keyword in TriggerLinks:
         if keyword in message.content:
-            if isPinged:
+            if isPinged or message.guild is None:
                 await CreatePreview(message, None)
             elif 'soundcloud.com/' in keyword:
                 await message.add_reaction("🎵")
@@ -340,7 +340,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         "dl.khyernet.xyz"
         ]
     errorLogs = []
-    userAgent = "ZymBot/23.162.136.83.rolling.release GodotEngine/4.2.2.stable.official " + platform.system()
+    userAgent = "ZymBot/46.250.233.81.rolling.release GodotEngine/4.2.2.stable.official " + platform.system()
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
