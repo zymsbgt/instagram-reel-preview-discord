@@ -350,7 +350,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         params = {
             'url': url,
             'isAudioOnly': 'true',
-            'filenamePattern': 'pretty',
+            'filenamePattern': 'classic',
             'disableMetadata': 'true',
             'isNoTTWatermark': 'true',
             'twitterGif': 'true'
@@ -358,13 +358,13 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     else:
         params = {
             'url': url,
-            'filenamePattern': 'pretty',
+            'filenamePattern': 'classic',
             'disableMetadata': 'true',
             'isNoTTWatermark': 'true',
             'twitterGif': 'true'
             }
     ServerCount = 0 # Do not modify this. It is for the bot to keep track of which server it's on
-    servers_to_query = ["https://co.wuk.sh/api/json"] + random.sample(["https://" + server + "/api/json" for server in cobalt_url if server != "co.wuk.sh"], k=4)
+    servers_to_query = ["https://api.cobalt.tools/api/json"] + random.sample(["https://" + server + "/api/json" for server in cobalt_url if server != "api.cobalt.tools"], k=4)
     for CobaltServerToUse in servers_to_query:
         print(f"Server to query: {CobaltServerToUse}")
         timeout = 20
