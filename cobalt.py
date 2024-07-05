@@ -333,8 +333,12 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         "api.snaptik.so",
         "dl01.spotifyloader.com",
         "co.eepy.today",
-        "cobalt-api.schizo.city",
-        "dl.khyernet.xyz"
+        "cobalt.schizo.city/api",
+        "dl.khyernet.xyz",
+        "co.tsaku.team",
+        "api-pl.cobalt.best",
+        "api-us.cobalt.best",
+        "api-jp.cobalt.best"
         ]
     errorLogs = []
     userAgent = "ZymBot/46.250.233.81.rolling.release GodotEngine/4.2.2.stable.official " + platform.system()
