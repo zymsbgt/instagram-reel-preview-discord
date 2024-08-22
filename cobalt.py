@@ -339,10 +339,11 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         "api-pl.cobalt.best",
         "api-us.cobalt.best",
         "api-jp.cobalt.best",
-        "api.top1savetube.com"
+        "api.top1savetube.com",
+        "api.seventyhost.net"
         ]
     errorLogs = []
-    userAgent = "ZymBot/46.250.233.81.rolling.release GodotEngine/4.2.2.stable.official " + platform.system()
+    userAgent = "ZymBot/46.250.233.81.rolling.release GodotEngine/4.3.stable.official " + platform.system()
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
