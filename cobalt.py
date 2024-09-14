@@ -253,10 +253,11 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
         await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
         await message.channel.send(f"**Error**: Could not upload video. Filesize is too large to handle ({file_size_mb} MB)")
     elif file_size_mb > 25:
-        await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
-        # Upload video to MinIO S3 storage
-        minio_url = await upload_to_s3(filename)
-        if minio_url:
+        # await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
+        # # Upload video to MinIO S3 storage
+        # minio_url = await upload_to_s3(filename)
+        # if minio_url:
+        if False: # Remove this line once S3 storage is available
             await message.channel.send(f"{minio_url}")
         else:
             await editMessage.edit(content=f"Failed to upload video to S3, compressing video instead...")
@@ -329,7 +330,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         "capi.oak.li",
         "api-cobalt.boykisser.systems",
         "cobalt.wither.ing",
-        "cobalt-api.alexagirl.studio",
         "api.snaptik.so",
         "dl01.spotifyloader.com",
         "co.eepy.today",
@@ -401,7 +401,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
                 response_status = response_data.get("status")
                 response_text = response_data.get("text")
                 print(f"**{CobaltServerToUse}**: {response_code} {response_status}:\n{response_text}")
-                await editMessage.edit(content=f"**{CobaltServerToUse}**: {response_code} {response_status}:\n{response_text}.\nTrying another server...")
                 errorLogs.append(f"**{CobaltServerToUse}**: {response_code} {response_status}:\n{response_text}")
             else:
                 print(f"**{CobaltServerToUse}** returned an unknown response code")
@@ -420,10 +419,11 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
             await editMessage.edit(content=f"**{CobaltServerToUse}**: Connection error: {conn_err}. Trying another server...")
             errorLogs.append(f"**{CobaltServerToUse}**: Connection error: {conn_err}")
         except requests.exceptions.RequestException as req_err:
+            #TODO: Add the HTTP error code to the logs, and if the error code is 1000-1020, we know that it is definitely coming from Cloudflare
             print(f"**{CobaltServerToUse}**: Request error: {req_err}")
             print(f"Response content: {response.content.decode('utf-8')}")
-            await editMessage.edit(content=f"**{CobaltServerToUse}**: Request blocked by Cloudflare. Trying another server...")
-            errorLogs.append(f"**{CobaltServerToUse}**: Request blocked by Cloudflare.")
+            await editMessage.edit(content=f"**{CobaltServerToUse}**: A request error occured (likely Cloudflare blocked the request). Check the bot's admin console for details. Trying another server...")
+            errorLogs.append(f"**{CobaltServerToUse}**: A request error occured (likely Cloudflare blocked the request). Check the bot's admin console for details.")
         except json.JSONDecodeError as json_err:
             print(f"**{CobaltServerToUse}**: JSON decoding error: {json_err}")
             await editMessage.edit(content=f"**{CobaltServerToUse}**: JSON decoding error: {json_err}. Trying another server...")
