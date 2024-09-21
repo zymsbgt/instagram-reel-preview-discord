@@ -223,7 +223,7 @@ async def compressVideo(message, filepath):
         print("Compression failed as the script is running on unknown OS. What are you using!?")
     if (os.path.exists(filepath + '-compressed.mp4') == False):
         print("Compression process was marked as complete, but output file is absent! It is likely that compression has failed.")
-        await message.channel.send('**Warning**: Compression failed: No compression module (ffmpeg or handbrake) detected on the bot')
+        await message.channel.send('**Warning**: Compression failed: No compression module (ffmpeg) detected on the bot')
     timeElapsed2 = time.time()-timeElapsed2
     print(f'Compression finished! Time elapsed: {timeElapsed2} seconds')
 
