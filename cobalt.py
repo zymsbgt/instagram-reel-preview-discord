@@ -341,7 +341,8 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         "api-jp.cobalt.best",
         "api.top1savetube.com",
         "api.seventyhost.net",
-        "cobalt-backend.canine.tools"
+        "cobalt-backend.canine.tools",
+        "cobalt.api.timelessnesses.me",
         ]
     errorLogs = []
     userAgent = "ZymBot/46.250.233.81.rolling.release GodotEngine/4.3.stable.official " + platform.system()
