@@ -154,7 +154,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                 await editMessage.edit(content=f"URL found: {url}")
             parsed_url = urlparse(url)
             url_without_query = urlunparse(parsed_url._replace(query=''))
-            await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt to reply...")
+            await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt v10 to reply...")
 
             response, ServerRequestCount, errorLogs = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
 
