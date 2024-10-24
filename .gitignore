@@ -5,3 +5,4 @@ ffmpeg2pass-*.log
 .space
 whitelist.txt
 secrets.py
+env
