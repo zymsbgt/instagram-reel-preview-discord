@@ -331,10 +331,15 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     os.getenv('COBALT_SERVER_2'): os.getenv('COBALT_SERVER_2_API_KEY'),
     os.getenv('COBALT_SERVER_3'): os.getenv('COBALT_SERVER_3_API_KEY')
     }
-    errorLogs = []
     userAgent = "ZymBot/46.250.233.81.rolling.release GodotEngine/4.3.stable.official " + platform.system()
-
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": userAgent
+    }
     print(f"User Agent: {requests.get('https://httpbin.org/get', headers=headers).json()['headers']['User-Agent']}")
+
+    errorLogs = []
 
     if AudioOnly == True:
         params = {
@@ -356,18 +361,18 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     ServerCount = 0 # Do not modify this. It is for the bot to keep track of which server it's on
     # Servers to query should depend on the service. This should be updated regularly to adapt and optimize for more successful downloads.
     if "instagram.com/" in url:
-        servers_to_query = random.sample(["https://" + server + "/api/json" for server in cobalt_url if server != os.getenv('COBALT_SERVER_0')], k=3)
+        servers_to_query = random.sample(["https://" + server + "/api/json" for server in cobalt_urls if server != os.getenv('COBALT_SERVER_0')], k=3)
     else:
-        servers_to_query = ["https://" + os.getenv('COBALT_SERVER_0') + "/api/json"] + random.sample(["https://" + server + "/api/json" for server in cobalt_url if server != os.getenv('COBALT_SERVER_0')], k=3)
+        servers_to_query = ["https://" + os.getenv('COBALT_SERVER_0') + "/api/json"] + random.sample(["https://" + server + "/api/json" for server in cobalt_urls if server != os.getenv('COBALT_SERVER_0')], k=3)
     for CobaltServerToUse in servers_to_query:
         print(f"Server to query: {CobaltServerToUse}. Inserting API key into request.")
         api_key = cobalt_urls[CobaltServerToUse.split('/')[2]]  # Get the API key for the selected server
         headers = {
         "Accept": "application/json",
-        "Authorization": f"Api-Key {api_key}",  # Correctly format the Authorization header
+        "Authorization": f"Api-Key {api_key}",
         "Content-Type": "application/json",
         "User-Agent": userAgent
-    }
+        }
         try:
             response = requests.post(CobaltServerToUse, headers=headers, json=params, timeout=20)
             response_data = response.json()
