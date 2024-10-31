@@ -177,10 +177,10 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
 
                 if (AudioOnly):
                     print(f"Successfully got audio for url: {video_url}")
-                    await editMessage.edit(content=f"Successfully got audio for url:<{video_url}>\nDownloading audio now...")
+                    await editMessage.edit(content=f"Successfully got audio from url!\nDownloading audio now...")
                 else:
                     print(f"Successfully got video for url: {video_url}")
-                    await editMessage.edit(content=f"Successfully got video for url:<{video_url}>\nDownloading video now...")
+                    await editMessage.edit(content=f"Successfully got video for url!\nDownloading video now...")
 
                 if (response_status == "stream"):
                     InfoMessage = await UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly)
