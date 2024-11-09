@@ -361,9 +361,9 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     ServerCount = 0 # Do not modify this. It is for the bot to keep track of which server it's on
     # Servers to query should depend on the service. This should be updated regularly to adapt and optimize for more successful downloads.
     if "instagram.com/" in url:
-        servers_to_query = random.sample(["https://" + server + "/api/json" for server in cobalt_urls if server != os.getenv('COBALT_SERVER_0')], k=3)
+        servers_to_query = random.sample(["https://" + server for server in cobalt_urls if server != os.getenv('COBALT_SERVER_0')], k=3)
     else:
-        servers_to_query = ["https://" + os.getenv('COBALT_SERVER_0') + "/api/json"] + random.sample(["https://" + server + "/api/json" for server in cobalt_urls if server != os.getenv('COBALT_SERVER_0')], k=3)
+        servers_to_query = ["https://" + os.getenv('COBALT_SERVER_0')] + random.sample(["https://" + server for server in cobalt_urls if server != os.getenv('COBALT_SERVER_0')], k=3)
     for CobaltServerToUse in servers_to_query:
         print(f"Server to query: {CobaltServerToUse}. Inserting API key into request.")
         api_key = cobalt_urls[CobaltServerToUse.split('/')[2]]  # Get the API key for the selected server
