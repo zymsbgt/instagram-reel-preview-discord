@@ -3,4 +3,5 @@ python-dotenv
 ffmpeg
 requests
 boto3
+aiohttp
 #pycurl
