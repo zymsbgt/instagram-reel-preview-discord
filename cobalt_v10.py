@@ -173,8 +173,9 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                     await editMessage.edit(content=f"Requests to all {(ServerRequestCount)} Cobalt servers were unsuccessful. Check the bot console for details.")
                 return
             else:
-                response_data = response.json()
-                response_code = response.status_code
+                #TODO: Change the following code to be compliant with aiohttp
+                response_data = await response.json()  # Make sure to await this
+                response_code = response.status  # Access the status code correctly
                 response_status = response_data.get("status")
 
                 video_url = response_data.get("url")
@@ -186,6 +187,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                     print(f"Successfully got video for url: {video_url}")
                     await editMessage.edit(content=f"Successfully got video for url!\nDownloading video now...")
 
+                print(f"Successfully got video/audio from url! Response status: {response_status}")
                 if (response_status == "stream"):
                     InfoMessage = await UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly)
                 else:
@@ -257,7 +259,7 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
     if file_size_mb > 20000:
         await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
         await message.channel.send(f"**Error**: Could not upload video. Filesize is too large to handle ({file_size_mb} MB)")
-    elif file_size_mb > 25:
+    elif file_size_mb > 10:
         # await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
         # # Upload video to MinIO S3 storage
         # minio_url = await upload_to_s3(filename)
@@ -348,13 +350,12 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
 
     errorLogs = []
     params = {
-        'url': url,
-        'filenamePattern': 'classic',
-        'disableMetadata': 'true'
+        "url": url,
+        "filenameStyle": "classic"
     }
     # params = {
     #     'url': url,
-    #     'filenamePattern': 'classic',
+    #     'filenameStyle': 'classic',
     #     'disableMetadata': 'true',
     #     'isNoTTWatermark': 'true',
     #     'twitterGif': 'true'
