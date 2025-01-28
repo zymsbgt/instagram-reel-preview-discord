@@ -199,8 +199,10 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                 if (InfoMessage != None):
                     if ((reactedUser != None) and (message.author.name != reactedUser.name)):
                         await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                        #TODO: Add alternate message for audio downloads
                     else:
                         await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                        #TODO: Add alternate message for audio downloads
             await editMessage.delete()
     #except Exception as e:
     #    await message.channel.send(f"The following error occured while generating the video:\n{e}")
@@ -349,15 +351,20 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     print(f"User Agent: {requests.get('https://httpbin.org/get', headers=headers).json()['headers']['User-Agent']}")
 
     errorLogs = []
+    # Make sure to test these parameters properly if you make any changes! Cobalt likes to return an error.api.invalid_body for random changes to the params
     params = {
-        'url': url,
-        'filenameStyle': 'classic',
-        'disableMetadata': 'true',
-        'isNoTTWatermark': 'true',
-        'twitterGif': 'true'
+        "url": url,
+        "filenameStyle": "classic"
     }
+    # params = {
+    #     'url': url,
+    #     'filenameStyle': 'classic',
+    #     'disableMetadata': 'true',
+    #     'isNoTTWatermark': 'true',
+    #     'twitterGif': 'true'
+    # }
     if AudioOnly:
-        params['isAudioOnly'] = 'true'
+        params['downloadMode'] = 'audio'
     
     ServerCount = 0 # Do not modify this. It is for the bot to keep track of which server it's on
     # Servers to query should depend on the service. This should be updated regularly to adapt and optimize for more successful downloads.
