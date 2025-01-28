@@ -145,6 +145,8 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                 url = url.replace('https://vx', 'https://')
             if "fixupx.com/" in url:
                 url = url.replace('https://fixup', 'https://')
+            if "girlcockx.com/" in url:
+                url = url.replace('https://girlcock', 'https://')
 
             # Set messageToEdit var
             if messageToEdit == None:
