@@ -350,16 +350,12 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
 
     errorLogs = []
     params = {
-        "url": url,
-        "filenameStyle": "classic"
+        'url': url,
+        'filenameStyle': 'classic',
+        'disableMetadata': 'true',
+        'isNoTTWatermark': 'true',
+        'twitterGif': 'true'
     }
-    # params = {
-    #     'url': url,
-    #     'filenameStyle': 'classic',
-    #     'disableMetadata': 'true',
-    #     'isNoTTWatermark': 'true',
-    #     'twitterGif': 'true'
-    # }
     if AudioOnly:
         params['isAudioOnly'] = 'true'
     
