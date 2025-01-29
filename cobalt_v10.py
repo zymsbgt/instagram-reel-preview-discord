@@ -188,9 +188,11 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                     await editMessage.edit(content=f"Successfully got video for url!\nDownloading video now...")
 
                 print(f"Successfully got video/audio from url! Response status: {response_status}")
-                if (response_status == "stream"):
+                if (response_status == "tunnel"):
                     InfoMessage = await UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly)
-                else:
+                elif (response_status == "picker"):
+                    InfoMessage = "Cobalt has presented multiple videos to download from. The bot developer has never encountered this, thus I do not know what to do here"
+                else: # response is redirect
                     InfoMessage = await UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly)
                 end_time = time.time()
                 execution_time = end_time - start_time
@@ -264,10 +266,11 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
         await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
         await message.channel.send(f"**Error**: Could not upload video. Filesize is too large to handle ({file_size_mb} MB)")
     elif file_size_mb > 10:
-        # await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
-        # # Upload video to MinIO S3 storage
-        # minio_url = await upload_to_s3(filename)
+        await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
+        # Upload video to MinIO S3 storage
+        minio_url = await upload_to_s3(filename)
         # if minio_url:
+        #     await message.channel.send(f"{minio_url}")
         if False: # Remove this line once S3 storage is available
             await message.channel.send(f"{minio_url}")
         else:
@@ -359,7 +362,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     # params = {
     #     'url': url,
     #     'filenameStyle': 'classic',
-    #     'isNoTTWatermark': 'true',
     #     'twitterGif': 'true'
     # }
     if AudioOnly:
@@ -372,7 +374,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     # else:
     #     servers_to_query = ["https://" + os.getenv('COBALT_SERVER_0')] + random.sample(["https://" + server for server in cobalt_urls if server != os.getenv('COBALT_SERVER_0')], k=3)
 
-    # Bleeding edge code using aiohttp
+    # New code setup using aiohttp
     servers_to_query = [server for server, (url, key) in cobalt_servers.items() if url is not None]
     async with aiohttp.ClientSession() as session:
         for server_id in servers_to_query:
@@ -431,7 +433,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     return None, ServerCount, errorLogs
 
 async def upload_to_s3(filename):
-    # Set up MinIO client
+    # Set up Backblaze B2 client
     s3_client = boto3.client(
         's3',
         endpoint_url=os.getenv('S3_ENDPOINT_URL'),
@@ -445,17 +447,13 @@ async def upload_to_s3(filename):
     print("Current directory:", os.getcwd())
     try:
         # Upload file to MinIO bucket
-        s3_client.upload_file(filename, bucket_name, filename)
+        await s3_client.upload_file(filename, bucket_name, filename)
 
         # Return the URL of the uploaded file
-        return s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': bucket_name, 'Key': filename},
-            ExpiresIn=259200  # URL expiration time in seconds
-        )
+        return f"https://s3.us-west-005.backblazeb2.com/zymbot-downloader/{filename}"  # Adjust the URL based on your bucket settings
     except ClientError as e:
-        print(f"Error uploading to MinIO: {e}")
-        await editMessage.edit(content=f"Error uploading to MinIO: {e}")
+        print(f"Error uploading to Backblaze B2: {e}")
+        await editMessage.edit(content=f"Error uploading to Backblaze B2: {e}")
         return None
 
 token = os.getenv('DISCORD_TOKEN')
