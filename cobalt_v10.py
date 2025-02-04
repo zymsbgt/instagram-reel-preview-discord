@@ -269,10 +269,10 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
         # Upload video to MinIO S3 storage
         minio_url = await upload_to_s3(filename)
-        # if minio_url:
-        #     await message.channel.send(f"{minio_url}")
-        if False: # Remove this line once S3 storage is available
+        if minio_url:
             await message.channel.send(f"{minio_url}")
+        # if False: # Remove this line once S3 storage is available
+        #     await message.channel.send(f"{minio_url}")
         else:
             await editMessage.edit(content=f"Failed to upload video to S3, compressing video instead...")
             # Fallback code in case S3 storage is offline (video compression method)
@@ -433,7 +433,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     return None, ServerCount, errorLogs
 
 async def upload_to_s3(filename):
-    # Set up Backblaze B2 client
+    # Set up S3 storage client
     s3_client = boto3.client(
         's3',
         endpoint_url=os.getenv('S3_ENDPOINT_URL'),
@@ -445,16 +445,43 @@ async def upload_to_s3(filename):
     bucket_name = os.getenv('S3_BUCKET_NAME')
 
     print("Current directory:", os.getcwd())
-    try:
-        # Upload file to MinIO bucket
-        await s3_client.upload_file(filename, bucket_name, filename)
+    # Upload file to MinIO bucket
+    s3_client.upload_file(filename, bucket_name, filename)
 
-        # Return the URL of the uploaded file
-        return f"https://s3.us-west-005.backblazeb2.com/zymbot-downloader/{filename}"  # Adjust the URL based on your bucket settings
-    except ClientError as e:
-        print(f"Error uploading to Backblaze B2: {e}")
-        await editMessage.edit(content=f"Error uploading to Backblaze B2: {e}")
-        return None
+    # Return the URL of the uploaded file
+    return s3_client.generate_presigned_url(
+        'get_object',
+        Params={'Bucket': bucket_name, 'Key': filename},
+        ExpiresIn=259200  # URL expiration time in seconds
+    )
+
+    # try:
+    #     Check if the file already exists in the bucket
+    #     s3_client.head_object(Bucket=bucket_name, Key=filename)
+    #     print(f"File {filename} already exists in bucket {bucket_name}. Skipping upload.")
+        
+    #     Return the URL of the existing file
+    #     return s3_client.generate_presigned_url(
+    #         'get_object',
+    #         Params={'Bucket': bucket_name, 'Key': filename},
+    #         ExpiresIn=259200  # URL expiration time in seconds
+    #     )
+    # except ClientError as e:
+    #     If the error is 404, the file does not exist, so we can proceed to upload
+    #     if e.response['Error']['Code'] == '404':
+    #         try:
+    #             Upload file to MinIO bucket
+    #             s3_client.upload_file(filename, bucket_name, filename)
+
+    #             Return the URL of the uploaded file
+    #             return s3_client.generate_presigned_url(
+    #                 'get_object',
+    #                 Params={'Bucket': bucket_name, 'Key': filename},
+    #                 ExpiresIn=259200  # URL expiration time in seconds
+    #             )
+    #         except:
+    #             print("File upload failed")
+    #             return None
 
 token = os.getenv('DISCORD_TOKEN')
 client.run(token)
