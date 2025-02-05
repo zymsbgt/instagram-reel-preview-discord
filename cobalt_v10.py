@@ -113,8 +113,8 @@ async def on_message(message):
     #         pass
 
 async def CreatePreview(message, messageToEdit = None, reactedUser = None, AudioOnly = False):
-    #try:
-    if True: # Uncomment this line if testing this try-except code block
+    try:
+    # if True: # Uncomment this line if testing this try-except code block
         DebugMode = False
         start_time = time.time()
         if message.guild is not None and message.guild.id == 443253214859755522:
@@ -206,8 +206,8 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                         await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
                         #TODO: Add alternate message for audio downloads
             await editMessage.delete()
-    #except Exception as e:
-    #    await message.channel.send(f"The following error occured while generating the video:\n{e}")
+    except Exception as e:
+       await message.channel.send(f"The following error occured while generating the video:\n{e}")
 
 async def ProcessVideoCompression(editMessage, message, filepath):
     if os.path.exists(filepath + '-compressed.mp4'):
@@ -271,8 +271,6 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
         minio_url = await upload_to_s3(filename)
         if minio_url:
             await message.channel.send(f"{minio_url}")
-        # if False: # Remove this line once S3 storage is available
-        #     await message.channel.send(f"{minio_url}")
         else:
             await editMessage.edit(content=f"Failed to upload video to S3, compressing video instead...")
             # Fallback code in case S3 storage is offline (video compression method)
@@ -445,43 +443,30 @@ async def upload_to_s3(filename):
     bucket_name = os.getenv('S3_BUCKET_NAME')
 
     print("Current directory:", os.getcwd())
-    # Upload file to MinIO bucket
-    s3_client.upload_file(filename, bucket_name, filename)
-
-    # Return the URL of the uploaded file
-    return s3_client.generate_presigned_url(
-        'get_object',
-        Params={'Bucket': bucket_name, 'Key': filename},
-        ExpiresIn=259200  # URL expiration time in seconds
-    )
-
-    # try:
-    #     Check if the file already exists in the bucket
-    #     s3_client.head_object(Bucket=bucket_name, Key=filename)
-    #     print(f"File {filename} already exists in bucket {bucket_name}. Skipping upload.")
+    try:
+        # Check if the file already exists in the bucket
+        s3_client.head_object(Bucket=bucket_name, Key=filename)
+        print(f"File {filename} already exists in bucket {bucket_name}. Skipping upload.")
         
-    #     Return the URL of the existing file
-    #     return s3_client.generate_presigned_url(
-    #         'get_object',
-    #         Params={'Bucket': bucket_name, 'Key': filename},
-    #         ExpiresIn=259200  # URL expiration time in seconds
-    #     )
-    # except ClientError as e:
-    #     If the error is 404, the file does not exist, so we can proceed to upload
-    #     if e.response['Error']['Code'] == '404':
-    #         try:
-    #             Upload file to MinIO bucket
-    #             s3_client.upload_file(filename, bucket_name, filename)
+        # Return the URL of the existing file
+        return "https://zymsb.floofyand.gay/" + filename
+    except ClientError as e:
+        # If the error is 404, the file does not exist, so we can proceed to upload
+        if e.response['Error']['Code'] == '404':
+            try:
+                # Upload file to MinIO bucket
+                s3_client.upload_file(filename, bucket_name, filename)
 
-    #             Return the URL of the uploaded file
-    #             return s3_client.generate_presigned_url(
-    #                 'get_object',
-    #                 Params={'Bucket': bucket_name, 'Key': filename},
-    #                 ExpiresIn=259200  # URL expiration time in seconds
-    #             )
-    #         except:
-    #             print("File upload failed")
-    #             return None
+                # Return the URL of the uploaded file
+                return "https://zymsb.floofyand.gay/" + filename
+                # return s3_client.generate_presigned_url(
+                #     'get_object',
+                #     Params={'Bucket': bucket_name, 'Key': filename},
+                #     ExpiresIn=259200  # URL expiration time in seconds
+                # )
+            except:
+                print("File upload failed")
+                return None
 
 token = os.getenv('DISCORD_TOKEN')
 client.run(token)
