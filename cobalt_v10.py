@@ -43,7 +43,8 @@ TriggerLinks = [
     'reddit.com/',
     'streamable.com/',
     'tumblr.com/',
-    'twitch.tv/'
+    'twitch.tv/',
+    'bsky.app/'
     ]
 
 @client.event
