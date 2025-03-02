@@ -32,7 +32,8 @@ TriggerLinks = [
     'youtu.be/', 
     'youtube.com/shorts/', 
     'vt.tiktok.com/', 
-    'tiktok.com/t', 
+    'tiktok.com/t',
+    'tiktok.com/@'
     'twitter.com/', 
     'x.com/', 
     'soundcloud.com/',
