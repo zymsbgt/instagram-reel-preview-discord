@@ -45,7 +45,8 @@ TriggerLinks = [
     'streamable.com/',
     'tumblr.com/',
     'twitch.tv/',
-    'bsky.app/'
+    'bsky.app/',
+    'xiaohongshu.com/'
     ]
 
 @client.event
@@ -68,7 +69,7 @@ async def on_raw_reaction_add(payload):
     for reaction in message.reactions:
         if (str(reaction.emoji) == str(payload.emoji) and reaction.me):
             emoji = payload.emoji.name if payload.emoji.is_custom_emoji() else payload.emoji.name
-            if (emoji == "🎬" or emoji == "🎵"):
+            if (emoji == "🎬" or emoji == "🎵" or emoji == "👀"):
                 try:
                     tryToSendMessage = await channel.send(f'Starting download...')
                 except Exception as ex:
@@ -102,8 +103,12 @@ async def on_message(message):
                 await CreatePreview(message, None)
             elif 'soundcloud.com/' in keyword:
                 await message.add_reaction("🎵")
-            elif 'x.com' in keyword or 'twitter.com' in keyword:
-                pass
+            # elif 'x.com' in keyword or 'twitter.com' in keyword:
+            #     await message.add_reaction("👀")
+            #     # TODO: Perform checks to ensure that request is valid here:
+            # elif 'bsky.app' in keyword or 'reddit.com' in keyword or 'xiaohongshu.com' in keyword:
+            #     await message.add_reaction("👀")
+            #     # TODO: Perform checks to ensure that request is valid here:
             else:
                 await message.add_reaction("🎬")
                 await message.add_reaction("🎵")
@@ -182,11 +187,14 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
 
                 video_url = response_data.get("url")
 
+                MediaType = "Media" # for printing out messages
                 if (AudioOnly):
-                    print(f"Successfully got audio for url: {video_url}")
+                    MediaType = "Audio"
+                    print(f"Successfully got {MediaType.lower()} for url: {video_url}")
                     await editMessage.edit(content=f"Successfully got audio from url!\nDownloading audio now...")
                 else:
-                    print(f"Successfully got video for url: {video_url}")
+                    MediaType = "Video"
+                    print(f"Successfully got {MediaType.lower()} for url: {video_url}")
                     await editMessage.edit(content=f"Successfully got video for url!\nDownloading video now...")
 
                 print(f"Successfully got video/audio from url! Response status: {response_status}")
@@ -202,10 +210,10 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                 print(f"Job complete! ({execution_time_rounded}s)")
                 if (InfoMessage != None):
                     if ((reactedUser != None) and (message.author.name != reactedUser.name)):
-                        await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                        await InfoMessage.edit(content=f"**Debug:** {MediaType} posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
                         #TODO: Add alternate message for audio downloads
                     else:
-                        await InfoMessage.edit(content=f"**Debug:** Video posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                        await InfoMessage.edit(content=f"**Debug:** {MediaType} posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
                         #TODO: Add alternate message for audio downloads
             await editMessage.delete()
     except Exception as e:
@@ -244,9 +252,12 @@ async def compressVideo(message, filepath):
 
 async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly):
     video_response = requests.get(video_url, stream=True)
+    MediaType = "Media"
     if AudioOnly == False:
+        MediaType = "Video"
         filename = "video.mp4"
     else:
+        MediaType = "Audio"
         filename = "audio.mp3"
     content_disposition = video_response.headers.get('Content-Disposition')
     if content_disposition is not None:
@@ -262,7 +273,7 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
 
     # Upload the video to Discord
     if (DebugMode == True):
-        InfoMessage = await message.channel.send(f"**Debug:** Video request from **{message.author.name}**")
+        InfoMessage = await message.channel.send(f"{MediaType} Video request from **{message.author.name}**")
     
     if file_size_mb > 20000:
         await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
@@ -312,7 +323,7 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
     file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
 
     if (DebugMode == True):
-        InfoMessage = await message.channel.send(f"**Debug:** Video request from **{message.author.name}**")
+        InfoMessage = await message.channel.send(f"**Debug:** Request from **{message.author.name}**")
     if file_size_mb <= 25:
         video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
         await editMessage.edit(content=f"Download success! Uploading video now...")
