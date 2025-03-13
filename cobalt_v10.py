@@ -370,21 +370,10 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         'url': url,
         'filenameStyle': 'classic'
     }
-    # params = {
-    #     'url': url,
-    #     'filenameStyle': 'classic',
-    #     'twitterGif': 'true'
-    # }
     if AudioOnly:
         params['downloadMode'] = 'audio'
     
     ServerCount = 0 # Do not modify this. It is for the bot to keep track of which server it's on
-    # Servers to query should depend on the service. This should be updated regularly to adapt and optimize for more successful downloads.
-    # if "instagram.com/" in url:
-    #     servers_to_query = random.sample(["https://" + server for server in cobalt_urls if server != os.getenv('COBALT_SERVER_0')], k=3)
-    # else:
-    #     servers_to_query = ["https://" + os.getenv('COBALT_SERVER_0')] + random.sample(["https://" + server for server in cobalt_urls if server != os.getenv('COBALT_SERVER_0')], k=3)
-
     # New code setup using aiohttp
     servers_to_query = [server for server, (url, key) in cobalt_servers.items() if url is not None]
     async with aiohttp.ClientSession() as session:
