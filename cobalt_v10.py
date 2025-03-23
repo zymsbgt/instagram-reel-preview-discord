@@ -455,7 +455,7 @@ async def check_s3_storage_for_file():
         # If the error is 404, the file does not exist, so we can proceed to upload
         if e.response['Error']['Code'] == '404':
             # TODO: Return function and tell the bot to proceed with the request
-    pass
+            pass
 
 async def upload_to_s3(filename):
     # Set up S3 storage client
