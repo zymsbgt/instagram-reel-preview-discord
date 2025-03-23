@@ -179,7 +179,6 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                     await editMessage.edit(content=f"Requests to all {(ServerRequestCount)} Cobalt servers were unsuccessful. Check the bot console for details.")
                 return
             else:
-                #TODO: Change the following code to be compliant with aiohttp
                 response_data = await response.json()  # Make sure to await this
                 response_code = response.status  # Access the status code correctly
                 response_status = response_data.get("status")
@@ -348,6 +347,7 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
         return None
 
 async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
+    # TODO: First check the S3 Bucket if the resource already exist. If it does, get it from there. If not, proceed with below.
     cobalt_servers = {
         'COBALT_SERVER_0': (os.getenv('COBALT_SERVER_0'), os.getenv('COBALT_SERVER_0_API_KEY')),
         'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY')),
@@ -430,6 +430,32 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
                 print(f"Cobalt server {ServerCount} could not obtain video. Trying another server...")
                 ServerCount += 1
     return None, ServerCount, errorLogs
+
+async def check_s3_storage_for_file():
+    # Set up S3 storage client
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=os.getenv('S3_ENDPOINT_URL'),
+        aws_access_key_id=os.getenv('S3_ACCESS_KEY'),
+        aws_secret_access_key=os.getenv('S3_SECRET_KEY')
+    )
+
+    # Set MinIO bucket name
+    bucket_name = os.getenv('S3_BUCKET_NAME')
+
+    print("Current directory:", os.getcwd())
+    try:
+        # Check if the file already exists in the bucket
+        s3_client.head_object(Bucket=bucket_name, Key=filename)
+        print(f"File {filename} already exists in bucket {bucket_name}. Skipping upload.")
+        
+        # Return the URL of the existing file
+        return "https://zymsb.floofyand.gay/" + filename
+    except ClientError as e:
+        # If the error is 404, the file does not exist, so we can proceed to upload
+        if e.response['Error']['Code'] == '404':
+            # TODO: Return function and tell the bot to proceed with the request
+    pass
 
 async def upload_to_s3(filename):
     # Set up S3 storage client
