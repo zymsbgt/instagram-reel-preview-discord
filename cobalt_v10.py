@@ -458,6 +458,8 @@ async def check_s3_storage_for_file():
             pass
 
 async def upload_to_s3(filename):
+    # S3 server is currently unavailable, so return none
+    return None
     # Set up S3 storage client
     s3_client = boto3.client(
         's3',
