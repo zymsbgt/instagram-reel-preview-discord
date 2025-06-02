@@ -276,7 +276,7 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
     if file_size_mb > 20000:
         await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
         await message.channel.send(f"**Error**: Could not upload video. Filesize is too large to handle ({file_size_mb} MB)")
-    elif file_size_mb > 10:
+    elif file_size_mb > 500:
         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
         # Upload video to MinIO S3 storage
         minio_url = await upload_to_s3(filename)
