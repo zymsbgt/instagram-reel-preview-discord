@@ -28,9 +28,9 @@ client = discord.Client(intents=intents)
 TriggerLinks = [
     'instagram.com/reel', 
     'instagram.com/p', 
-    'youtube.com/watch?v=', 
-    'youtu.be/', 
-    'youtube.com/shorts/', 
+    #'youtube.com/watch?v=', 
+    #'youtu.be/', 
+    #'youtube.com/shorts/', 
     'vt.tiktok.com/', 
     'tiktok.com/',
     'twitter.com/', 
