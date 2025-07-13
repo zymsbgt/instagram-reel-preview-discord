@@ -28,9 +28,9 @@ client = discord.Client(intents=intents)
 TriggerLinks = [
     'instagram.com/reel', 
     'instagram.com/p', 
-    #'youtube.com/watch?v=', 
-    #'youtu.be/', 
-    #'youtube.com/shorts/', 
+    'youtube.com/watch?v=', 
+    'youtu.be/', 
+    'youtube.com/shorts/', 
     'vt.tiktok.com/', 
     'tiktok.com/',
     'twitter.com/', 
@@ -119,6 +119,7 @@ async def on_message(message):
     #         pass
 
 async def CreatePreview(message, messageToEdit = None, reactedUser = None, AudioOnly = False):
+    splashMessage = "This service is powered by [cobalt.tools](https://cobalt.tools). No ads, no bullshit; Best way to save what you love.\nDonate to help keep ZymBot's downloader running: https://cobalt.tools/donate"
     try:
     # if True: # Uncomment this line if testing this try-except code block
         DebugMode = False
@@ -164,7 +165,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                 await editMessage.edit(content=f"URL found: {url}")
             parsed_url = urlparse(url)
             url_without_query = urlunparse(parsed_url._replace(query=''))
-            await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt v10 to reply...")
+            await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt v10 to reply...\n{splashMessage}")
 
             response, ServerRequestCount, errorLogs = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
 
@@ -176,7 +177,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                     for i in errorLogs:
                         await message.channel.send(f"{i}")
                 else:
-                    await editMessage.edit(content=f"Requests to all {(ServerRequestCount)} Cobalt servers were unsuccessful. Check the bot console for details.")
+                    await editMessage.edit(content=f"Requests to all {(ServerRequestCount)} Cobalt servers were unsuccessful. Check the bot console for details.\n{splashMessage}")
                 return
             else:
                 response_data = await response.json()  # Make sure to await this
@@ -189,11 +190,11 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                 if (AudioOnly):
                     MediaType = "Audio"
                     print(f"Successfully got {MediaType.lower()} for url: {video_url}")
-                    await editMessage.edit(content=f"Successfully got audio from url!\nDownloading audio now...")
+                    await editMessage.edit(content=f"Successfully got audio from url!\nDownloading audio now\n{splashMessage}")
                 else:
                     MediaType = "Video"
                     print(f"Successfully got {MediaType.lower()} for url: {video_url}")
-                    await editMessage.edit(content=f"Successfully got video for url!\nDownloading video now...")
+                    await editMessage.edit(content=f"Successfully got video for url!\nDownloading video now\n{splashMessage}")
 
                 print(f"Successfully got video/audio from url! Response status: {response_status}")
                 if (response_status == "tunnel"):
