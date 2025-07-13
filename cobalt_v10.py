@@ -373,7 +373,6 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
         params['downloadMode'] = 'audio'
     
     ServerCount = 0 # Do not modify this. It is for the bot to keep track of which server it's on
-    # New code setup using aiohttp
     servers_to_query = [server for server, (url, key) in cobalt_servers.items() if url is not None]
     async with aiohttp.ClientSession() as session:
         for server_id in servers_to_query:
@@ -431,7 +430,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
                 ServerCount += 1
     return None, ServerCount, errorLogs
 
-async def check_s3_storage_for_file():
+async def check_s3_storage_for_file(): # Note: This function is currently unused as of 13 July 2025
     # Set up S3 storage client
     s3_client = boto3.client(
         's3',
