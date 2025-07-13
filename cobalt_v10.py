@@ -107,10 +107,10 @@ async def on_message(message):
                 await asyncio.sleep(5)
                 await message.add_reaction("📶")
                 await message.add_reaction("🌐")
-                await message.remove_reaction("👀")
+                await message.remove_reaction("👀", client.user)
                 await asyncio.sleep(5)
-                await message.remove_reaction("📶")
-                await message.remove_reaction("🌐")
+                await message.remove_reaction("📶", client.user)
+                await message.remove_reaction("🌐", client.user)
             # elif 'x.com' in keyword or 'twitter.com' in keyword:
             #     await message.add_reaction("👀")
             #     # TODO: Perform checks to ensure that request is valid here:
