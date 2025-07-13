@@ -322,7 +322,7 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
 
     if (DebugMode == True):
         InfoMessage = await message.channel.send(f"**Debug:** Request from **{message.author.name}**")
-    if file_size_mb <= 25:
+    if file_size_mb <= 10:
         video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
         await editMessage.edit(content=f"Download success! Uploading video now...")
         if AudioOnly == False:
