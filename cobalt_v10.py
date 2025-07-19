@@ -180,13 +180,13 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
 
             if response == None:
                 if DebugMode == True or message.guild is None:
-                    await editMessage.edit(content=f"Requests to a randomly selected pool of {(ServerRequestCount)} Cobalt servers to download the content were unsuccessful. Here's what each one of them replied:")
+                    await editMessage.edit(content=f"Requests to {(ServerRequestCount)} Cobalt servers to download the content were unsuccessful. Here's what each one of them replied:")
                     if errorLogs == []:
                         await message.channel.send("Could not send error logs. (errorLogs variable is empty [more likely] or missing permissions [less likely]) Check server console for details.")
                     for i in errorLogs:
                         await message.channel.send(f"{i}")
                 else:
-                    await editMessage.edit(content=f"Requests to all {(ServerRequestCount)} Cobalt servers were unsuccessful. Check the bot console for details.\n{splashMessage}")
+                    await editMessage.edit(content=f"Requests to {(ServerRequestCount)} Cobalt servers were unsuccessful. Ask the developer to check the bot console for details.\n{splashMessage}")
                 return
             else:
                 response_data = await response.json()  # Make sure to await this
