@@ -1,4 +1,4 @@
-# This file is the third rewrite of this bot to make ZymBot's downloader mobule compatible with Cobalt v10. This script is not ready for production.
+# This file is the third rewrite of this bot to make ZymBot's downloader mobule compatible with Cobalt v10. This script is ready for production.
 # There may be a toggleable option to fallback to local downloads using yt-dlp
 
 import discord
