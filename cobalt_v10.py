@@ -103,14 +103,7 @@ async def on_message(message):
             elif 'soundcloud.com/' in keyword:
                 await message.add_reaction("🎵")
             elif 'youtube.com/watch?v=' in keyword or 'youtu.be/' in keyword or 'youtube.com/shorts/' in keyword:
-                await message.add_reaction("👀")
-                await asyncio.sleep(5)
-                await message.add_reaction("📶")
-                await message.add_reaction("🌐")
-                await message.remove_reaction("👀", client.user)
-                await asyncio.sleep(5)
-                await message.remove_reaction("📶", client.user)
-                await message.remove_reaction("🌐", client.user)
+                pass
             # elif 'x.com' in keyword or 'twitter.com' in keyword:
             #     await message.add_reaction("👀")
             #     # TODO: Perform checks to ensure that request is valid here:
@@ -360,12 +353,14 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     # TODO: First check the S3 Bucket if the resource already exist. If it does, get it from there. If not, proceed with below.
     if "youtube.com/watch?v=" in url or "youtu.be/" in url or "youtube.com/shorts/" in url:
         cobalt_servers = {
-            'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY'))
+            'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY')),
+            'COBALT_SERVER_2': (os.getenv('COBALT_SERVER_2'), os.getenv('COBALT_SERVER_2_API_KEY'))
         }
     else:
         cobalt_servers = {
             'COBALT_SERVER_0': (os.getenv('COBALT_SERVER_0'), os.getenv('COBALT_SERVER_0_API_KEY')),
-            'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY'))
+            'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY')),
+            'COBALT_SERVER_2': (os.getenv('COBALT_SERVER_2'), os.getenv('COBALT_SERVER_2_API_KEY'))
         }
     userAgent = f"ZymBot/46.250.233.81.rolling.release GodotEngine/4.3.stable.official {platform.system()}"
     headers = {
