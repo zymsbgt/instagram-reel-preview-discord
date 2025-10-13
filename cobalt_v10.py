@@ -103,13 +103,16 @@ async def on_message(message):
             elif 'soundcloud.com/' in keyword:
                 await message.add_reaction("🎵")
             elif 'youtube.com/watch?v=' in keyword or 'youtu.be/' in keyword or 'youtube.com/shorts/' in keyword:
-                pass
+                await message.add_reaction("🎬")
+                await message.add_reaction("🎵")
             # elif 'x.com' in keyword or 'twitter.com' in keyword:
             #     await message.add_reaction("👀")
             #     # TODO: Perform checks to ensure that request is valid here:
             # elif 'bsky.app' in keyword or 'reddit.com' in keyword or 'xiaohongshu.com' in keyword:
             #     await message.add_reaction("👀")
             #     # TODO: Perform checks to ensure that request is valid here:
+            elif message.guild.id == 883295230441451552: # Monado Server
+                return
             else:
                 await message.add_reaction("🎬")
                 await message.add_reaction("🎵")
