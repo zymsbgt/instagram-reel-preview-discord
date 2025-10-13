@@ -360,12 +360,14 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     # TODO: First check the S3 Bucket if the resource already exist. If it does, get it from there. If not, proceed with below.
     if "youtube.com/watch?v=" in url or "youtu.be/" in url or "youtube.com/shorts/" in url:
         cobalt_servers = {
-            'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY'))
+            'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY')),
+            'COBALT_SERVER_2': (os.getenv('COBALT_SERVER_2'), os.getenv('COBALT_SERVER_2_API_KEY'))
         }
     else:
         cobalt_servers = {
             'COBALT_SERVER_0': (os.getenv('COBALT_SERVER_0'), os.getenv('COBALT_SERVER_0_API_KEY')),
-            'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY'))
+            'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY')),
+            'COBALT_SERVER_2': (os.getenv('COBALT_SERVER_2'), os.getenv('COBALT_SERVER_2_API_KEY'))
         }
     userAgent = f"ZymBot/46.250.233.81.rolling.release GodotEngine/4.3.stable.official {platform.system()}"
     headers = {
@@ -390,7 +392,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     async with aiohttp.ClientSession() as session:
         for server_id in servers_to_query:
             cobalt_url, api_key = cobalt_servers[server_id]
-            cobalt_url = f"https://{cobalt_url}"  # Ensure the URL is properly formatted
+            cobalt_url = f"{cobalt_url}"  # Ensure the URL is properly formatted
             
             print(f"Server to query: {cobalt_url}. Inserting API key into request.")
             headers["Authorization"] = f"Api-Key {api_key}"
