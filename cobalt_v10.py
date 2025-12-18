@@ -510,12 +510,12 @@ async def upload_to_s3(filename):
                 print("File upload failed")
                 return None
 
-@tree.command(name="donate", description="Get the donation link")
-async def donate(interaction: discord.Interaction):
-    await interaction.response.send_message(
-        f"ZymBot is currently not accepting any donations, but if you find the video downloader useful, please donate to cobalt.tools! https://cobalt.tools/donate",
-        ephemeral=False  # only visible to the user who used the command
-    )
+# @tree.command(name="donate", description="Get the donation link")
+# async def donate(interaction: discord.Interaction):
+#     await interaction.response.send_message(
+#         f"ZymBot is currently not accepting any donations, but if you find the video downloader useful, please donate to cobalt.tools! https://cobalt.tools/donate",
+#         ephemeral=False  # only visible to the user who used the command
+#     )
 
 token = os.getenv('DISCORD_TOKEN')
 client.run(token)
