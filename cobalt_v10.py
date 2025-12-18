@@ -2,6 +2,7 @@
 # There may be a toggleable option to fallback to local downloads using yt-dlp
 
 import discord
+from discord import app_commands
 import requests
 import os
 import platform
@@ -24,6 +25,7 @@ load_dotenv()
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
+tree = app_commands.CommandTree(client)
 
 TriggerLinks = [
     'instagram.com/reel', 
@@ -50,6 +52,7 @@ TriggerLinks = [
 
 @client.event
 async def on_ready():
+    await tree.sync()
     servers = client.guilds
     print("Servers I'm currently in:")
     for server in servers:
@@ -506,6 +509,13 @@ async def upload_to_s3(filename):
             except:
                 print("File upload failed")
                 return None
+
+@tree.command(name="donate", description="Get the donation link")
+async def donate(interaction: discord.Interaction):
+    await interaction.response.send_message(
+        f"ZymBot is currently not accepting any donations, but if you find the video downloader useful, please donate to cobalt.tools! https://cobalt.tools/donate",
+        ephemeral=False  # only visible to the user who used the command
+    )
 
 token = os.getenv('DISCORD_TOKEN')
 client.run(token)
