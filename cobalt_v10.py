@@ -32,7 +32,7 @@ TriggerLinks = [
     'instagram.com/p', 
     'youtube.com/watch?v=', 
     'youtu.be/', 
-    'youtube.com/shorts/', 
+    'youtube.com/shorts/',
     'vt.tiktok.com/', 
     'tiktok.com/',
     'twitter.com/', 
@@ -285,7 +285,7 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
     if file_size_mb > 20000:
         await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
         await message.channel.send(f"**Error**: Could not upload video. Filesize is too large to handle ({file_size_mb} MB)")
-    elif file_size_mb > 10:
+    elif file_size_mb > 500: # Adjust limit here, 500 for Discord Nitro, 10 for no Discord Nitro
         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
         # Upload video to MinIO S3 storage
         minio_url = await upload_to_s3(filename)
@@ -303,13 +303,13 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
             try:
                 await message.channel.send(file=discord.File(filename))
             except:
-                await message.channel.send("**Error**: Failed to upload video to Discord")
+                await message.channel.send("**Error**: Failed to upload compressed video to Discord")
     else:
         await editMessage.edit(content=f"Download success! Uploading video now...")
         try:
             await message.channel.send(file=discord.File(filename))
         except:
-            await message.channel.send("**Error**: Failed to upload video to Discord")
+            await message.channel.send("**Error**: Failed to upload uncompressed video to Discord")
 
     # Comment this line if you would prefer to have a caching system that I inefficiently built. I didn't like how it turned out.
     os.remove(filename)
