@@ -87,38 +87,91 @@ async def on_raw_reaction_add(payload):
 
 @client.event
 async def on_message(message):
-    isPinged = False
-    
     if message.author == client.user:
         return
-    
-    if message.guild is not None and message.guild.id == 612289903769944064: # RoFT Fan Chat
+    if "@everyone" in message.content or "@here" in message.content:
         return
-    
-    if client.user.mentioned_in(message):
-        isPinged = True
+    isPinged = client.user.mentioned_in(message)
+    foundAnyLinks = False
     
     global TriggerLinks
+    # Note: This part should find all trigger links in a message
+    ## Old version of code:
+    # for keyword in TriggerLinks:
+    #     if keyword in message.content:
+    #         if isPinged or message.guild is None:
+    #             await CreatePreview(message)
+    #         elif 'soundcloud.com/' in keyword:
+    #             await message.add_reaction("🎵")
+    #         elif message.guild.id == 612289903769944064: # RoFT Fan Chat (only react for soundcloud links)
+    #             return
+    #         elif 'youtube.com/watch?v=' in keyword or 'youtu.be/' in keyword or 'youtube.com/shorts/' in keyword:
+    #             await message.add_reaction("🎬")
+    #             await message.add_reaction("🎵")
+    #         elif message.guild.id == 883295230441451552: # Monado Server
+    #             return
+    #         # elif 'x.com' in keyword or 'twitter.com' in keyword:
+    #         #     await message.add_reaction("👀")
+    #         #     # TODO: Check if the link contains a GIF or video
+    #         # elif 'bsky.app' in keyword or 'reddit.com' in keyword or 'xiaohongshu.com' in keyword:
+    #         #     await message.add_reaction("👀")
+    #         #     # TODO: Check if the link contains a GIF or video
+    #         else:
+    #             await message.add_reaction("🎬")
+    #             await message.add_reaction("🎵")
+    # TODO: If no keywords found, check if message.content == "<@302299077368872961>". The bot should check for social media links in the reply message.
+
+    ## New version of code:
     for keyword in TriggerLinks:
-        if keyword in message.content:
+        if keyword in content:
+            foundAnyLinks = True
+
+            # If bot was pinged or message is a DM, create preview
             if isPinged or message.guild is None:
-                await CreatePreview(message, None)
-            elif 'soundcloud.com/' in keyword:
+                await CreatePreview(message)
+                # Once preview created, you probably don't want other reactions; continue scanning to mark foundAnyLinks
+                continue
+
+            # Special-case: in RoFT Fan Chat, only react for soundcloud links (guild id 612289903769944064)
+            if message.guild and message.guild.id == 612289903769944064:
+                if 'soundcloud.com/' in keyword:
+                    await message.add_reaction("🎵")
+                # do not add other reactions in this guild
+                continue
+
+            # Special-case: Monado Server (guild id 883295230441451552) — do nothing
+            if message.guild and message.guild.id == 883295230441451552:
+                continue
+
+            # SoundCloud reaction
+            if 'soundcloud.com/' in keyword:
                 await message.add_reaction("🎵")
-            elif 'youtube.com/watch?v=' in keyword or 'youtu.be/' in keyword or 'youtube.com/shorts/' in keyword:
+                continue
+
+            # YouTube (watch, short, youtu.be) reactions
+            if ('youtube.com/watch?v=' in keyword) or ('youtu.be/' in keyword) or ('youtube.com/shorts/' in keyword):
                 await message.add_reaction("🎬")
                 await message.add_reaction("🎵")
-            # elif 'x.com' in keyword or 'twitter.com' in keyword:
-            #     await message.add_reaction("👀")
-            #     # TODO: Perform checks to ensure that request is valid here:
-            # elif 'bsky.app' in keyword or 'reddit.com' in keyword or 'xiaohongshu.com' in keyword:
-            #     await message.add_reaction("👀")
-            #     # TODO: Perform checks to ensure that request is valid here:
-            elif message.guild.id == 883295230441451552: # Monado Server
-                return
-            else:
-                await message.add_reaction("🎬")
-                await message.add_reaction("🎵")
+                continue
+
+            # Default: add both movie & music reactions
+            await message.add_reaction("🎬")
+            await message.add_reaction("🎵")
+
+    # TODO behavior implemented: if no trigger found but message equals direct bot mention,
+    # check the replied-to message (if any) for trigger links and create preview if found.
+    if not foundAnyLinks:
+        # exact mention like "<@302299077368872961>" or "<@!302299077368872961>"
+        mention_forms = {f"<@{client.user.id}>", f"<@!{client.user.id}>"}
+        if content.strip() in mention_forms:
+            # if message is a reply, check the referenced message
+            if message.reference and isinstance(message.reference.resolved, type(message)):
+                referenced = message.reference.resolved
+                ref_content = referenced.content or ""
+                for keyword in TriggerLinks:
+                    if keyword in ref_content:
+                        # create preview for the referenced message
+                        await CreatePreview(referenced)
 
     # if ('twitter.com/' in message.content):
     #     try:
