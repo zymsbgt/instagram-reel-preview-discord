@@ -123,7 +123,7 @@ async def on_message(message):
 
     ## New version of code:
     for keyword in TriggerLinks:
-        if keyword in content:
+        if keyword in message.content:
             foundAnyLinks = True
 
             # If bot was pinged or message is a DM, create preview
@@ -163,7 +163,8 @@ async def on_message(message):
     if not foundAnyLinks:
         # exact mention like "<@302299077368872961>" or "<@!302299077368872961>"
         mention_forms = {f"<@{client.user.id}>", f"<@!{client.user.id}>"}
-        if content.strip() in mention_forms:
+        mention_forms_audio = {f"<@{client.user.id}> audioonly", f"<@!{client.user.id}> soundonly", f"<@{client.user.id}> audio", f"<@!{client.user.id}> sound", f"<@!{client.user.id}> music"}
+        if message.content.strip() in mention_forms or message.content.strip() in mention_forms_audio:
             # if message is a reply, check the referenced message
             if message.reference and isinstance(message.reference.resolved, type(message)):
                 referenced = message.reference.resolved
@@ -171,7 +172,16 @@ async def on_message(message):
                 for keyword in TriggerLinks:
                     if keyword in ref_content:
                         # create preview for the referenced message
-                        await CreatePreview(referenced)
+                        if referenced.author == message.author and message.content.strip() in mention_forms:
+                            await CreatePreview(referenced)
+                        elif referenced.author == message.author and message.content.strip() in mention_forms_audio:
+                            await CreatePreview(referenced, None, None, True)
+                        elif referenced.author != message.author and message.content.strip() in mention_forms:
+                            await CreatePreview(referenced, None, message.author)
+                        elif referenced.author != message.author and message.content.strip() in mention_forms_audio:
+                            await CreatePreview(referenced, None, message.author, True)
+                        else:
+                            await message.channel.send("Warning in cobalt_v10.py Line 184 in on_message() function: This should never happen")
 
     # if ('twitter.com/' in message.content):
     #     try:
@@ -270,10 +280,10 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                 print(f"Job complete! ({execution_time_rounded}s)")
                 if (InfoMessage != None):
                     if ((reactedUser != None) and (message.author.name != reactedUser.name)):
-                        await InfoMessage.edit(content=f"**Debug:** {MediaType} posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                        await InfoMessage.edit(content=f"**Debug Info:** {MediaType} posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
                         #TODO: Add alternate message for audio downloads
                     else:
-                        await InfoMessage.edit(content=f"**Debug:** {MediaType} posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                        await InfoMessage.edit(content=f"**Debug Info:** {MediaType} posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
                         #TODO: Add alternate message for audio downloads
             await editMessage.delete()
     except Exception as e:
@@ -383,7 +393,7 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
     file_size_mb = file_size_bytes / (1024 * 1024)  # Convert bytes to megabytes
 
     if (DebugMode == True):
-        InfoMessage = await message.channel.send(f"**Debug:** Request from **{message.author.name}**")
+        InfoMessage = await message.channel.send(f"**Debug Info:** Request from **{message.author.name}**")
     if file_size_mb <= 10:
         video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
         await editMessage.edit(content=f"Download success! Uploading video now...")
