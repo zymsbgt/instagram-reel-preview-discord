@@ -19,7 +19,7 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 import random
-import yt-dlp
+import yt_dlp
 
 load_dotenv()
 
