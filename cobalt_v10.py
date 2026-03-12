@@ -1,5 +1,5 @@
 # This file is the third rewrite of this bot to make ZymBot's downloader mobule compatible with Cobalt v10. This script is ready for production.
-# There may be a toggleable option to fallback to local downloads using yt-dlp
+# TODO: Make a toggable option to fallback to local downloads using yt-dlp
 
 import discord
 from discord import app_commands
@@ -47,7 +47,8 @@ TriggerLinks = [
     'tumblr.com/',
     'twitch.tv/',
     'bsky.app/',
-    'xiaohongshu.com/'
+    'xiaohongshu.com/',
+    'newgrounds.com.'
     ]
 
 @client.event
@@ -96,32 +97,6 @@ async def on_message(message):
     
     global TriggerLinks
     # Note: This part should find all trigger links in a message
-    ## Old version of code:
-    # for keyword in TriggerLinks:
-    #     if keyword in message.content:
-    #         if isPinged or message.guild is None:
-    #             await CreatePreview(message)
-    #         elif 'soundcloud.com/' in keyword:
-    #             await message.add_reaction("🎵")
-    #         elif message.guild.id == 612289903769944064: # RoFT Fan Chat (only react for soundcloud links)
-    #             return
-    #         elif 'youtube.com/watch?v=' in keyword or 'youtu.be/' in keyword or 'youtube.com/shorts/' in keyword:
-    #             await message.add_reaction("🎬")
-    #             await message.add_reaction("🎵")
-    #         elif message.guild.id == 883295230441451552: # Monado Server
-    #             return
-    #         # elif 'x.com' in keyword or 'twitter.com' in keyword:
-    #         #     await message.add_reaction("👀")
-    #         #     # TODO: Check if the link contains a GIF or video
-    #         # elif 'bsky.app' in keyword or 'reddit.com' in keyword or 'xiaohongshu.com' in keyword:
-    #         #     await message.add_reaction("👀")
-    #         #     # TODO: Check if the link contains a GIF or video
-    #         else:
-    #             await message.add_reaction("🎬")
-    #             await message.add_reaction("🎵")
-    # TODO: If no keywords found, check if message.content == "<@302299077368872961>". The bot should check for social media links in the reply message.
-
-    ## New version of code:
     for keyword in TriggerLinks:
         if keyword in message.content:
             foundAnyLinks = True
