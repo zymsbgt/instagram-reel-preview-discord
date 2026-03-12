@@ -548,6 +548,7 @@ async def upload_to_s3(filename):
                 print("File upload failed")
                 return None
 
+## /donate command
 # @tree.command(name="donate", description="Get the donation link")
 # async def donate(interaction: discord.Interaction):
 #     await interaction.response.send_message(
