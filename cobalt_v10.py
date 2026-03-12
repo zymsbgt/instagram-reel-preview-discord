@@ -214,59 +214,65 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                 await editMessage.edit(content=f"URL found: {url}")
             parsed_url = urlparse(url)
             url_without_query = urlunparse(parsed_url._replace(query=''))
+
             #TODO: Filter some streaming services to yt-dlp instead of cobalt.tools
             if "medal.tv/" in url_without_query or "odysee.com/" in url_without_query:
                 await editMessage.edit(content=f"Formatted URL: {url_without_query}. Processing locally using yt-dlp...\n{splashMessage}")
-                response, ServerRequestCount, errorLogs = await DownloadWithYtDlp(url, editMessage, message, AudioOnly)
-            else:
+                filename = await DownloadWithYtDlp(url, editMessage, message, AudioOnly)
+                try:
+                    await message.channel.send(file=discord.File(filename))
+                except Exception as ex:
+                    await message.channel.send("Unable to upload video")
+                return
+            else: # for everything else
                 await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt v10 to reply...\n{splashMessage}")
                 response, ServerRequestCount, errorLogs = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
 
-            if response == None:
-                if DebugMode == True or message.guild is None:
-                    await editMessage.edit(content=f"Requests to {(ServerRequestCount)} Cobalt servers to download the content were unsuccessful. Here's what each one of them replied:")
-                    if errorLogs == []:
-                        await message.channel.send("Could not send error logs. (errorLogs variable is empty [more likely] or missing permissions [less likely]) Check server console for details.")
-                    for i in errorLogs:
-                        await message.channel.send(f"{i}")
-                else:
-                    await editMessage.edit(content=f"Requests to {(ServerRequestCount)} Cobalt servers were unsuccessful. Ask the developer to check the bot console for details.\n{splashMessage}")
-                return
-            else:
-                response_data = await response.json()  # Make sure to await this
-                response_code = response.status  # Access the status code correctly
-                response_status = response_data.get("status")
-
-                video_url = response_data.get("url")
-
-                MediaType = "Media" # for printing out messages
-                if (AudioOnly):
-                    MediaType = "Audio"
-                    print(f"Successfully got {MediaType.lower()} for url: {video_url}")
-                    await editMessage.edit(content=f"Successfully got audio from url!\nDownloading audio now\n{splashMessage}")
-                else:
-                    MediaType = "Video"
-                    print(f"Successfully got {MediaType.lower()} for url: {video_url}")
-                    await editMessage.edit(content=f"Successfully got video for url!\nDownloading video now\n{splashMessage}")
-
-                print(f"Successfully got video/audio from url! Response status: {response_status}")
-                if (response_status == "tunnel"):
-                    InfoMessage = await UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly)
-                elif (response_status == "picker"):
-                    InfoMessage = "Cobalt has presented multiple videos to download from. The bot developer has never encountered this, thus I do not know what to do here"
-                else: # response is redirect
-                    InfoMessage = await UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly)
-                end_time = time.time()
-                execution_time = end_time - start_time
-                execution_time_rounded = round(execution_time, 1)
-                print(f"Job complete! ({execution_time_rounded}s)")
-                if (InfoMessage != None):
-                    if ((reactedUser != None) and (message.author.name != reactedUser.name)):
-                        await InfoMessage.edit(content=f"**Debug Info:** {MediaType} posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
-                        #TODO: Add alternate message for audio downloads
+                if response == None:
+                    if DebugMode == True or message.guild is None:
+                        await editMessage.edit(content=f"Requests to {(ServerRequestCount)} Cobalt servers to download the content were unsuccessful. Here's what each one of them replied:")
+                        if errorLogs == []:
+                            await message.channel.send("Could not send error logs. (errorLogs variable is empty [more likely] or missing permissions [less likely]) Check server console for details.")
+                        for i in errorLogs:
+                            await message.channel.send(f"{i}")
                     else:
-                        await InfoMessage.edit(content=f"**Debug Info:** {MediaType} posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
-                        #TODO: Add alternate message for audio downloads
+                        await editMessage.edit(content=f"Requests to {(ServerRequestCount)} Cobalt servers were unsuccessful. Ask the developer to check the bot console for details.\n{splashMessage}")
+                    return
+                else:
+                    response_data = await response.json()  # Make sure to await this
+                    response_code = response.status  # Access the status code correctly
+                    response_status = response_data.get("status")
+
+                    video_url = response_data.get("url")
+
+                    MediaType = "Media" # for printing out messages
+                    if (AudioOnly):
+                        MediaType = "Audio"
+                        print(f"Successfully got {MediaType.lower()} for url: {video_url}")
+                        await editMessage.edit(content=f"Successfully got audio from url!\nDownloading audio now\n{splashMessage}")
+                    else:
+                        MediaType = "Video"
+                        print(f"Successfully got {MediaType.lower()} for url: {video_url}")
+                        await editMessage.edit(content=f"Successfully got video for url!\nDownloading video now\n{splashMessage}")
+
+                    print(f"Successfully got video/audio from url! Response status: {response_status}")
+                    if (response_status == "tunnel"):
+                        InfoMessage = await UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly)
+                    elif (response_status == "picker"):
+                        InfoMessage = "Cobalt has presented multiple videos to download from. The bot developer has never encountered this, thus I do not know what to do here"
+                    else: # response is redirect
+                        InfoMessage = await UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly)
+                    end_time = time.time()
+                    execution_time = end_time - start_time
+                    execution_time_rounded = round(execution_time, 1)
+                    print(f"Job complete! ({execution_time_rounded}s)")
+                    if (InfoMessage != None):
+                        if ((reactedUser != None) and (message.author.name != reactedUser.name)):
+                            await InfoMessage.edit(content=f"**Debug Info:** {MediaType} posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                            #TODO: Add alternate message for audio downloads
+                        else:
+                            await InfoMessage.edit(content=f"**Debug Info:** {MediaType} posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
+                            #TODO: Add alternate message for audio downloads
             await editMessage.delete()
     except Exception as e:
        await message.channel.send(f"The following error occured while generating the video:\n{e}")
@@ -499,17 +505,18 @@ async def DownloadWithYtDlp(url, editMessage, message, AudioOnly):
     ydl = yt_dlp.YoutubeDL({'outtmpl': f'%(id)s-%(title)s.%(ext)s'})
     with ydl:
         try:
-            results = ydl.extract_info(
+            result = ydl.extract_info(
                 url,
                 download=True
             )
             await editMessage.edit(content=f"Media fetched! Now uploading...")
             print(f'yt-dlp has successfully downloaded media!')
+            filepath = result["id"] + "-" + result["title"] + "." + result["ext"]
+            return filepath
         except Exception as ex:
             print("Failed to download media")
             await editMessage.edit(content=f"Failed to download media")
-            return None, 0, []
-    return result, 0, []
+            return None
 
 async def check_s3_storage_for_file(): # Note: This function is currently unused as of 13 July 2025
     # Set up S3 storage client
