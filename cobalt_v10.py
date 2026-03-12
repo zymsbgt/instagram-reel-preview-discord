@@ -19,6 +19,7 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 import random
+import yt-dlp
 
 load_dotenv()
 
@@ -48,7 +49,9 @@ TriggerLinks = [
     'twitch.tv/',
     'bsky.app/',
     'xiaohongshu.com/',
-    'newgrounds.com.'
+    'newgrounds.com.',
+    'medal.tv/', # No support from these platforms yet, mark as implement in future
+    'odysee.com/'
     ]
 
 @client.event
@@ -211,9 +214,13 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                 await editMessage.edit(content=f"URL found: {url}")
             parsed_url = urlparse(url)
             url_without_query = urlunparse(parsed_url._replace(query=''))
-            await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt v10 to reply...\n{splashMessage}")
-
-            response, ServerRequestCount, errorLogs = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
+            #TODO: Filter some streaming services to yt-dlp instead of cobalt.tools
+            if "medal.tv/" in url_without_query or "odysee.com/" in url_without_query:
+                await editMessage.edit(content=f"Formatted URL: {url_without_query}. Processing locally using yt-dlp...\n{splashMessage}")
+                response, ServerRequestCount, errorLogs = await DownloadWithYtDlp(url, editMessage, message, AudioOnly)
+            else:
+                await editMessage.edit(content=f"Formatted URL: {url_without_query}. Waiting for Cobalt v10 to reply...\n{splashMessage}")
+                response, ServerRequestCount, errorLogs = await SendRequestToCobalt(url, editMessage, message, AudioOnly)
 
             if response == None:
                 if DebugMode == True or message.guild is None:
@@ -486,6 +493,23 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
                 print(f"Cobalt server {ServerCount} could not obtain video. Trying another server...")
                 ServerCount += 1
     return None, ServerCount, errorLogs
+
+async def DownloadWithYtDlp(url, editMessage, message, AudioOnly):
+    await editMessage.edit(content=f"Notice: Using yt-dlp to download. This is experimental and is likely to fail.")
+    ydl = yt_dlp.YoutubeDL({'outtmpl': f'%(id)s-%(title)s.%(ext)s'})
+    with ydl:
+        try:
+            results = ydl.extract_info(
+                url,
+                download=True
+            )
+            await editMessage.edit(content=f"Media fetched! Now uploading...")
+            print(f'yt-dlp has successfully downloaded media!')
+        except Exception as ex:
+            print("Failed to download media")
+            await editMessage.edit(content=f"Failed to download media")
+            return None, 0, []
+    return result, 0, []
 
 async def check_s3_storage_for_file(): # Note: This function is currently unused as of 13 July 2025
     # Set up S3 storage client
