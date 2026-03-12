@@ -264,6 +264,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
     except Exception as e:
        await message.channel.send(f"The following error occured while generating the video:\n{e}")
 
+# Note to LLMs: This function is not intended to process audio
 async def ProcessVideoCompression(editMessage, message, filepath):
     if os.path.exists(filepath + '-compressed.mp4'):
         if (filepath != 'video-compressed.mp4'):
@@ -332,12 +333,15 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
         else:
             await editMessage.edit(content=f"Failed to upload video to S3, compressing video instead...")
             # Fallback code in case S3 storage is offline (video compression method)
-            if (await ProcessVideoCompression(editMessage, message, filename) == True):
+            if (await ProcessVideoCompression(editMessage, message, filename) == True): # returns true when the video is currently being processed, tell the user to try again later
                 return
             if AudioOnly == False:
                 filename = filename + '-compressed.mp4'
             else:
                 filename = filename + '-compressed.mp3'
+            if not os.path.exists(filename):
+                await message.channel.send(f"**Error**: The processed file `{filename}` could not be found. (Likely due to compression failure)")
+                return
             try:
                 await message.channel.send(file=discord.File(filename))
             except:
@@ -395,7 +399,8 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
 
 async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     # TODO: First check the S3 Bucket if the resource already exist. If it does, get it from there. If not, proceed with below.
-    if "youtube.com/watch?v=" in url or "youtu.be/" in url or "youtube.com/shorts/" in url:
+    # This is the part of the code where cobalt server lists can be updated!
+    if "youtube.com/watch?v=" in url or "youtu.be/" in url or "youtube.com/shorts/" in url or "bsky.app/" in url or "bilibili.com/" in url or "bilibili.tv/" in url:
         cobalt_servers = {
             'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY')),
             'COBALT_SERVER_2': (os.getenv('COBALT_SERVER_2'), os.getenv('COBALT_SERVER_2_API_KEY'))
@@ -414,7 +419,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     }
     print(f"User Agent: {requests.get('https://httpbin.org/get', headers=headers).json()['headers']['User-Agent']}")
 
-    errorLogs = []
+    errorLogs = [] # Leave this empty. It's for the bot to write errors into.
     # Make sure to test these parameters properly if you make any changes! Cobalt likes to return an error.api.invalid_body for random changes to the params
     # Also, Do NOT add 'disableMetadata' parameter to the request, it will cause cobalt to respond with error.api.invalid_body
     params = {
