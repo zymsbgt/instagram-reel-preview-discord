@@ -250,9 +250,9 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                 else:
                     await editMessage.edit(content=f"Requests to {(ServerRequestCount)} Cobalt servers were unsuccessful. Ask the developer to check the bot console for details.\n{splashMessage}")
                 return
-            else:
-                response_data = await response.json()  # Make sure to await this
-                response_code = response.status  # Access the status code correctly
+            else: # Server response is valid
+                response_data = await response.json()
+                response_code = response.status
                 response_status = response_data.get("status")
 
                 video_url = response_data.get("url")
@@ -339,17 +339,23 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
                 file.write(chunk)
     
     file_size_bytes = os.path.getsize(filename)
+    # TODO: Send a message to the user if the filesize is 0
     file_size_mb = file_size_bytes / (1024 * 1024)
 
     # Upload the video to Discord
     if (DebugMode == True):
         InfoMessage = await message.channel.send(f"{MediaType} Video request from **{message.author.name}**")
     
+    if file_size_bytes == 0:
+        await message.channel.send("Download completed but the media streaming service sent an empty file (0 bytes). Please retry the download or double check the source media.")
+        os.remove(filename)
+        return InfoMessage if DebugMode else None
     if file_size_mb > 20000:
         await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
         await message.channel.send(f"**Error**: Could not upload video. Filesize is too large to handle ({file_size_mb} MB)")
-    elif file_size_mb > 500: # Adjust limit here, 500 for Discord Nitro, 10 for no Discord Nitro
+    elif file_size_mb > 8: # Adjust limit here, 500 for Discord Nitro, 8 for no Discord Nitro
         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
+        # TODO: Upload to a server with a bigger file storage limit then forward the message/link to the original channel
         # Upload video to MinIO S3 storage
         minio_url = await upload_to_s3(filename)
         if minio_url:
@@ -376,11 +382,7 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
 
     # Comment this line if you would prefer to have a caching system that I inefficiently built. I didn't like how it turned out.
     os.remove(filename)
-
-    if (DebugMode == True):
-        return InfoMessage
-    else:
-        return None
+    return InfoMessage if DebugMode else None
 
 async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
     video_response = requests.get(video_url)
@@ -394,6 +396,9 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
 
     if (DebugMode == True):
         InfoMessage = await message.channel.send(f"**Debug Info:** Request from **{message.author.name}**")
+    if file_size_bytes == 0:
+        await message.channel.send("Download completed but the media streaming service sent an empty file (0 bytes). Please retry the download or double check the source media.")
+        return InfoMessage if DebugMode else None
     if file_size_mb <= 10:
         video_bytes_io.seek(0)  # Reset the file pointer to the beginning of the buffer
         await editMessage.edit(content=f"Download success! Uploading video now...")
@@ -413,10 +418,7 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
     else:
         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Sending video link instead...")
         await message.channel.send(video_url)
-    if (DebugMode == True):
-        return InfoMessage
-    else:
-        return None
+    return InfoMessage if DebugMode else None
 
 async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     # TODO: First check the S3 Bucket if the resource already exist. If it does, get it from there. If not, proceed with below.
