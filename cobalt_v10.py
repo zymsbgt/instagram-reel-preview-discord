@@ -52,6 +52,7 @@ TriggerLinks = [
     'newgrounds.com.',
     'medal.tv/', # No support from these platforms yet, mark as implement in future
     'odysee.com/'
+    'facebook.com/'
     ]
 
 @client.event
