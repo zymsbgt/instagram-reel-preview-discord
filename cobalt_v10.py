@@ -248,12 +248,10 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                     MediaType = "Media" # for printing out messages
                     if (AudioOnly):
                         MediaType = "Audio"
-                        print(f"Successfully got {MediaType.lower()} for url: {video_url}")
-                        await editMessage.edit(content=f"Successfully got audio from url!\nDownloading audio now\n{splashMessage}")
                     else:
                         MediaType = "Video"
-                        print(f"Successfully got {MediaType.lower()} for url: {video_url}")
-                        await editMessage.edit(content=f"Successfully got video for url!\nDownloading video now\n{splashMessage}")
+                    print(f"Successfully got {MediaType.lower()} for url: {video_url}")
+                    await editMessage.edit(content=f"Successfully got {MediaType.lower()} for url!\nDownloading {MediaType.lower()} now\n{splashMessage}")
 
                     print(f"Successfully got video/audio from url! Response status: {response_status}")
                     if (response_status == "tunnel"):
