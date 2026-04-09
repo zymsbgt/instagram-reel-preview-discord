@@ -251,7 +251,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                     else:
                         MediaType = "Video"
                     print(f"Successfully got {MediaType.lower()} for url: {video_url}")
-                    await editMessage.edit(content=f"Successfully got {MediaType.lower()} for url!\nDownloading {MediaType.lower()} now\n{splashMessage}")
+                    await editMessage.edit(content=f"Successfully got {MediaType.lower()} for url!\n**Downloading {MediaType.lower()} now**\n{splashMessage}")
 
                     print(f"Successfully got video/audio from url! Response status: {response_status}")
                     if (response_status == "tunnel"):
@@ -334,33 +334,56 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
         await message.channel.send("Download completed but the media streaming service sent an empty file (0 bytes). Please retry the download or double check the source media.")
         os.remove(filename)
         return InfoMessage if DebugMode else None
-    if file_size_mb > 20000:
+    if file_size_mb > 50:
         await editMessage.edit(content=f"Uhhh... guys? I can't handle a video this big...")
         await message.channel.send(f"**Error**: Could not upload video. Filesize is too large to handle ({file_size_mb} MB)")
     elif file_size_mb > 8: # Adjust limit here, 500 for Discord Nitro, 8 for no Discord Nitro
-        await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
-        # TODO: Upload to a server with a bigger file storage limit then forward the message/link to the original channel
-        
-        # Upload video to MinIO S3 storage
-        minio_url = await upload_to_s3(filename)
-        if minio_url:
-            await message.channel.send(f"{minio_url}")
-        else:
-            await editMessage.edit(content=f"Failed to upload video to S3, compressing video instead...")
-            # Fallback code in case S3 storage is offline (video compression method)
-            if (await ProcessVideoCompression(editMessage, message, filename) == True): # returns true when the video is currently being processed, tell the user to try again later
-                return
-            if AudioOnly == False:
-                filename = filename + '-compressed.mp4'
-            else:
-                filename = filename + '-compressed.mp3'
-            if not os.path.exists(filename):
-                await message.channel.send(f"**Error**: The processed file `{filename}` could not be found. (Likely due to compression failure)")
-                return
-            try:
-                await message.channel.send(file=discord.File(filename))
-            except:
-                await message.channel.send("**Error**: Failed to upload compressed video to Discord")
+        await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to alternate channel...")
+        ALT_GUILD_ID = os.getenv('ALT_GUILD_ID')
+        ALT_CHANNEL_ID = os.getenv('ALT_CHANNEL_ID')
+        try:
+            #TODO: Send the video to the alternate channel, then either forward the message or get the video link from discord's cdn and paste it in the original channel
+            # Use your global 'client' to find the channel
+            alt_channel = client.get_channel(ALT_CHANNEL_ID)
+            
+            # If it's not in the cache, we fetch it manually
+            if alt_channel is None:
+                alt_channel = await client.fetch_channel(ALT_CHANNEL_ID)
+
+            with open(filename, 'rb') as f:
+                discord_file = discord.File(f, filename=filename)
+                # Ship it off to the storage channel
+                backup_msg = await alt_channel.send(
+                    content=f"Media backup for {message.guild.name} (ID: {message.guild.id})", 
+                    file=discord_file
+                )
+
+            # Retrieve the permanent Discord CDN link from the backup message
+            attachment_url = backup_msg.attachments[0].url
+            await message.channel.send(f"✅ **Upload successful!**\nSince the file was over the limit, I have embedded it here: {attachment_url}")
+        except:
+            await message.channel.send("**Error**: Failed to upload uncompressed video to Discord")
+
+        # # Upload video to MinIO S3 storage
+        # minio_url = await upload_to_s3(filename)
+        # if minio_url:
+        #     await message.channel.send(f"{minio_url}")
+        # else:
+        #     await editMessage.edit(content=f"Failed to upload video to S3, compressing video instead...")
+        #     # Fallback code in case S3 storage is offline (video compression method)
+        #     if (await ProcessVideoCompression(editMessage, message, filename) == True): # returns true when the video is currently being processed, tell the user to try again later
+        #         return
+        #     if AudioOnly == False:
+        #         filename = filename + '-compressed.mp4'
+        #     else:
+        #         filename = filename + '-compressed.mp3'
+        #     if not os.path.exists(filename):
+        #         await message.channel.send(f"**Error**: The processed file `{filename}` could not be found. (Likely due to compression failure)")
+        #         return
+        #     try:
+        #         await message.channel.send(file=discord.File(filename))
+        #     except:
+        #         await message.channel.send("**Error**: Failed to upload compressed video to Discord")
     else:
         await editMessage.edit(content=f"Download success! Uploading video now...")
         try:
