@@ -216,7 +216,6 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
             parsed_url = urlparse(url)
             url_without_query = urlunparse(parsed_url._replace(query=''))
 
-            #TODO: Filter some streaming services to yt-dlp instead of cobalt.tools
             if "medal.tv/" in url_without_query or "odysee.com/" in url_without_query:
                 await editMessage.edit(content=f"Formatted URL: {url_without_query}. Processing locally using yt-dlp...\n{splashMessage}")
                 filename = await DownloadWithYtDlp(url, editMessage, message, AudioOnly)
@@ -268,10 +267,8 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
                     if (InfoMessage != None):
                         if ((reactedUser != None) and (message.author.name != reactedUser.name)):
                             await InfoMessage.edit(content=f"**Debug Info:** {MediaType} posted from **{message.author.name}** (Requested by **{reactedUser.name}**, {(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
-                            #TODO: Add alternate message for audio downloads
                         else:
                             await InfoMessage.edit(content=f"**Debug Info:** {MediaType} posted from **{message.author.name}** ({(ServerRequestCount + 1)} Cobalt requests, {execution_time_rounded}s)")
-                            #TODO: Add alternate message for audio downloads
             await editMessage.delete()
     except Exception as e:
        await message.channel.send(f"The following error occured while generating the video:\n{e}")
@@ -327,7 +324,6 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
                 file.write(chunk)
     
     file_size_bytes = os.path.getsize(filename)
-    # TODO: Send a message to the user if the filesize is 0
     file_size_mb = file_size_bytes / (1024 * 1024)
 
     # Upload the video to Discord
@@ -344,6 +340,7 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
     elif file_size_mb > 8: # Adjust limit here, 500 for Discord Nitro, 8 for no Discord Nitro
         await editMessage.edit(content=f"Download successful, but video is above filesize limit. Uploading video to S3 Storage...")
         # TODO: Upload to a server with a bigger file storage limit then forward the message/link to the original channel
+        
         # Upload video to MinIO S3 storage
         minio_url = await upload_to_s3(filename)
         if minio_url:
@@ -417,7 +414,8 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly):
     if "youtube.com/watch?v=" in url or "youtu.be/" in url or "youtube.com/shorts/" in url or "bsky.app/" in url or "bilibili.com/" in url or "bilibili.tv/" in url:
         cobalt_servers = {
             'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY')),
-            'COBALT_SERVER_2': (os.getenv('COBALT_SERVER_2'), os.getenv('COBALT_SERVER_2_API_KEY'))
+            'COBALT_SERVER_2': (os.getenv('COBALT_SERVER_2'), os.getenv('COBALT_SERVER_2_API_KEY')),
+            'COBALT_SERVER_3': (os.getenv('COBALT_SERVER_3'), os.getenv('COBALT_SERVER_3_API_KEY'))
         }
     else:
         cobalt_servers = {
