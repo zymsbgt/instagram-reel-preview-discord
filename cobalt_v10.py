@@ -353,10 +353,16 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
             with open(filename, 'rb') as f:
                 discord_file = discord.File(f, filename=filename)
                 # Ship it off to the storage channel
-                backup_msg = await alt_channel.send(
-                    content=f"Media backup for {message.guild.name} (ID: {message.guild.id})", 
-                    file=discord_file
-                )
+                if message.guild == None:
+                    backup_msg = await alt_channel.send(
+                        content=f"Media backup for Direct Messages", 
+                        file=discord_file
+                    )
+                else:
+                    backup_msg = await alt_channel.send(
+                        content=f"Media backup for {message.guild.name} (ID: {message.guild.id})", 
+                        file=discord_file
+                    )
 
             # Retrieve the permanent Discord CDN link from the backup message
             attachment_url = backup_msg.attachments[0].url
