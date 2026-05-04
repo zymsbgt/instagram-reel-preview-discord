@@ -55,8 +55,24 @@ for svc, (_, substrings) in services.items():
 # optional: remove duplicates
 TriggerLinks = list(dict.fromkeys(TriggerLinks))
 
-processingUsers = []
+# Loop through all services
+for service_name, (downloader, url_formats) in services.items():
+    print(service_name)   # video service name (e.g., "YouTube")
+    print(downloader)     # downloader service (e.g., "Cobalt" or "YtDlp")
+    print(url_formats)    # list of URL substrings/formats
 
+# Access a specific service (eg YouTube)
+downloader, url_formats = services["YouTube"]
+service_name = "YouTube"
+print(service_name, downloader, url_formats)
+
+# loop all services and their URL formats
+for service_name, (downloader, url_formats) in services.items():
+    print(service_name, "->", downloader)
+    for fmt in url_formats:
+        print("  ", fmt)
+
+processingUsers = []
 
 @client.event
 async def on_ready():
