@@ -170,6 +170,10 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
         DebugMode = False
         global processingUsers, TriggerLinks
         # TODO: Add reactedUser.id (or message.user.id if reactedUser == None) to processingUsers list
+        if reactedUser.id != None:
+            processingUsers.append(reactedUser.id)
+        else:
+            processingUsers.append(message.user.id)
         start_time = time.time()
         if message.guild is not None and message.guild.id == 443253214859755522:
             DebugMode = True
