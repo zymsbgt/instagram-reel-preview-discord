@@ -50,8 +50,8 @@ TriggerLinks = [
     'bsky.app/',
     'xiaohongshu.com/',
     'newgrounds.com.',
-    'medal.tv/', # No support from these platforms yet, mark as implement in future
-    'odysee.com/'
+    'medal.tv/',
+    'odysee.com/',
     'facebook.com/'
     ]
 
@@ -360,7 +360,7 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
                     )
                 else:
                     backup_msg = await alt_channel.send(
-                        content=f"Media backup for {message.guild.name} (ID: {message.guild.id})", 
+                        content=f"Media backup for {message.guild.name}", 
                         file=discord_file
                     )
 
