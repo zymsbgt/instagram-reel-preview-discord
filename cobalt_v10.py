@@ -160,7 +160,7 @@ async def on_message(message):
                         elif referenced.author != message.author and message.content.strip() in mention_forms_audio:
                             await CreatePreview(referenced, None, message.author, True)
                         else:
-                            await message.channel.send("Warning in cobalt_v10.py Line 184 in on_message() function: This should never happen")
+                            await message.channel.send("Error in cobalt_v10.py Line 163 in on_message() function: This should never happen")
 
     # if ('twitter.com/' in message.content):
     #     try:
@@ -193,8 +193,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
             await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
             return
 
-        if DebugMode == True:
-            print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
+        print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
 
         for url in urls:
             # Removes FixTweet/FixUpX
