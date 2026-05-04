@@ -55,6 +55,8 @@ for svc, (_, substrings) in services.items():
 # optional: remove duplicates
 TriggerLinks = list(dict.fromkeys(TriggerLinks))
 
+processingUsers = []
+
 
 @client.event
 async def on_ready():
@@ -168,6 +170,7 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
     try:
     # if True: # Uncomment this line if testing this try-except code block
         DebugMode = False
+        # TODO: Add reactedUser.id (or message.user.id if reactedUser == None) to processingUsers list
         start_time = time.time()
         if message.guild is not None and message.guild.id == 443253214859755522:
             DebugMode = True
