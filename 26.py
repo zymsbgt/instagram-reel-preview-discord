@@ -119,15 +119,13 @@ async def on_message(message):
                 # If bot was pinged or DM, create preview
                 if isPinged or message.guild is None:
                     await CreatePreview(message)
-                    break  # stop checking substrings for this service
+                    break
 
                 # guild-specific special cases
                 if message.guild:
-                    if message.guild.id == 612289903769944064: # RoFT Fan Chat
+                    if message.guild.id == 612289903769944064 or message.guild.id == 883295230441451552: # RoFT Fan Chat
                         if "soundcloud.com/" in sub:
                             await message.add_reaction("🎵")
-                        break
-                    if message.guild.id == 883295230441451552: # Monado Server
                         break
 
                 # if this substring is for soundcloud -> only audio react
