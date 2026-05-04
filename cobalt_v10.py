@@ -159,7 +159,7 @@ async def on_message(message):
                         elif referenced.author != message.author and message.content.strip() in mention_forms_audio:
                             await CreatePreview(referenced, None, message.author, True)
                         else:
-                            await message.channel.send("Error in cobalt_v10.py Line 163 in on_message() function: This should never happen")
+                            await message.channel.send("Error in cobalt_v10.py Line 162 in on_message() function: This should never happen")
 
     # if ('twitter.com/' in message.content):
     #     try:
