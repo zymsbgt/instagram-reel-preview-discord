@@ -32,7 +32,7 @@ services = {
     "Instagram": ("Cobalt", ["instagram.com/reel", "instagram.com/p/"]),
     "YouTube":   ("Cobalt", ["youtube.com/watch?v=", "youtu.be/", "youtube.com/shorts/"]),
     "TikTok":    ("Cobalt", ["tiktok.com/"]),
-    "X":         ("Cobalt", ["twitter.com/", "x.com/"]),
+    "Twitter":   ("Cobalt", ["twitter.com/", "x.com/"]),
     "SoundCloud":("Cobalt", ["soundcloud.com/"]),
     "Bilibili":  ("Cobalt", ["bilibili.com/", "bilibili.tv/"]),
     "Dailymotion":("Cobalt", ["dailymotion.com/"]),
@@ -43,7 +43,7 @@ services = {
     "Twitch":    ("Cobalt", ["twitch.tv/"]),
     "Bluesky":   ("Cobalt", ["bsky.app/"]),
     "Xiaohongshu":("Cobalt", ["xiaohongshu.com/"]),
-    "Newgrounds":("Cobalt", ["newgrounds.com."]),
+    "Newgrounds":("Cobalt", ["newgrounds.com/"]),
     "Facebook":  ("Cobalt", ["facebook.com/"]),
     "Medal":     ("YtDlp",  ["medal.tv/"]),
     "Odysee":    ("YtDlp",  ["odysee.com/"])
@@ -121,12 +121,11 @@ async def on_message(message):
 
                 # guild-specific special cases
                 if message.guild:
-                    if message.guild.id == 612289903769944064:
-                        # only add soundcloud reaction in that guild
+                    if message.guild.id == 612289903769944064: # RoFT Fan Chat
                         if "soundcloud.com/" in sub:
                             await message.add_reaction("🎵")
                         break
-                    if message.guild.id == 883295230441451552:
+                    if message.guild.id == 883295230441451552: # Monado Server
                         break
 
                 # if this substring is for soundcloud -> only audio react
@@ -161,5 +160,58 @@ async def on_message(message):
                         audio_only = cont in mention_forms_audio
                         # if author same/different handle user param accordingly
                         target_user = referenced.author if referenced.author == message.author else message.author
-                        await CreatePreview(referenced, None, target_user if referenced.author != message.author else None, AudioOnly=audio_only)
+                        await CreatePreview(referenced, None, target_user if referenced.author != message.author else None, audio_only)
                         break
+
+async def CreatePreview(message, messageToEdit = None, reactedUser = None, AudioOnly = False):
+    splashMessage = "This service is powered by [cobalt.tools](https://cobalt.tools). No ads, no bullshit; Best way to save what you love.\nDonate to help keep ZymBot's downloader running: https://cobalt.tools/donate"
+    try:
+    # if True: # Uncomment this line if testing this try-except code block
+        DebugMode = False
+        start_time = time.time()
+        if message.guild is not None and message.guild.id == 443253214859755522:
+            DebugMode = True
+        
+        global TriggerLinks
+        urls = [] # Leave this blank
+
+        # Splitting the message content by whitespace to extract potential links
+        words = message.content.split()
+        print(words)
+
+        for word in words:
+            print(word)
+            if any(keyword in word for keyword in TriggerLinks):
+                urls.append(word)
+
+        if not urls:
+            await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
+            return
+
+        print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
+        for url in urls:
+            # Removes FixTweet/FixUpX. TODO: Only run these filters if the service detected is Twitter
+            if "fxtwitter.com/" in url:
+                url = url.replace('https://fx', 'https://')
+            if "vxtwitter.com/" in url:
+                url = url.replace('https://vx', 'https://')
+            if "fixupx.com/" in url:
+                url = url.replace('https://fixup', 'https://')
+            if "girlcockx.com/" in url:
+                url = url.replace('https://girlcock', 'https://')
+            
+            # Set messageToEdit var
+            if messageToEdit == None:
+                editMessage = await message.channel.send(f"URL found: {url}")
+            else:
+                editMessage = messageToEdit
+                await editMessage.edit(content=f"URL found: {url}")
+            parsed_url = urlparse(url)
+            url_without_query = urlunparse(parsed_url._replace(query=''))
+
+            # TODO: If statement to check if link service is Medal or Odysee. Do NOT use regex!!!
+                DownloadVideo()
+            else:
+                DownloadVideo()
+    except:
+        pass
