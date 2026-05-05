@@ -189,8 +189,11 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
         if not urls:
             await message.channel.send("**Content Downloader Worker:** I could not find any links in your message")
             return
-
-        print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
+        
+        if message.guild is None:
+            print(f"{message.author.name} in Direct Messages: {message.content}")
+        else:
+            print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
 
         for url in urls:
             # Removes FixTweet/FixUpX
