@@ -5,3 +5,4 @@ requests
 boto3
 aiohttp
 #pycurl
+yt-dlp

@@ -136,8 +136,6 @@ async def on_message(message):
             await message.add_reaction("🎬")
             await message.add_reaction("🎵")
 
-    # TODO behavior implemented: if no trigger found but message equals direct bot mention,
-    # check the replied-to message (if any) for trigger links and create preview if found.
     if not foundAnyLinks:
         # exact mention like "<@302299077368872961>" or "<@!302299077368872961>"
         mention_forms = {f"<@{client.user.id}>", f"<@!{client.user.id}>"}

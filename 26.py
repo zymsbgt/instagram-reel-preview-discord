@@ -55,22 +55,10 @@ for svc, (_, substrings) in services.items():
 # optional: remove duplicates
 TriggerLinks = list(dict.fromkeys(TriggerLinks))
 
-# Loop through all services
-for service_name, (downloader, url_formats) in services.items():
-    print(service_name)   # video service name (e.g., "YouTube")
-    print(downloader)     # downloader service (e.g., "Cobalt" or "YtDlp")
-    print(url_formats)    # list of URL substrings/formats
-
-# Access a specific service (eg YouTube)
-downloader, url_formats = services["YouTube"]
-service_name = "YouTube"
-print(service_name, downloader, url_formats)
-
-# loop all services and their URL formats
-for service_name, (downloader, url_formats) in services.items():
-    print(service_name, "->", downloader)
-    for fmt in url_formats:
-        print("  ", fmt)
+# # Access a specific service (eg YouTube)
+# downloader, url_formats = services["YouTube"]
+# service_name = "YouTube"
+# print(service_name, downloader, url_formats)
 
 processingUsers = []
 
@@ -185,11 +173,11 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
     # if True: # Uncomment this line if testing this try-except code block
         DebugMode = False
         global processingUsers, TriggerLinks
-        # TODO: Add reactedUser.id (or message.user.id if reactedUser == None) to processingUsers list
-        if reactedUser.id != None:
+        if reactedUser != None:
             processingUsers.append(reactedUser.id)
         else:
-            processingUsers.append(message.user.id)
+            processingUsers.append(message.author.id)
+        print(f"processingUser: {processingUsers}")
         start_time = time.time()
         if message.guild is not None and message.guild.id == 443253214859755522:
             DebugMode = True
@@ -212,14 +200,17 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
         print(f"{message.author.name} in #{message.channel.name} in guild {message.guild.name}: {message.content}")
         for url in urls:
             # Removes FixTweet/FixUpX. TODO: Only run these filters if the service detected is Twitter
-            if "fxtwitter.com/" in url:
-                url = url.replace('https://fx', 'https://')
-            if "vxtwitter.com/" in url:
-                url = url.replace('https://vx', 'https://')
-            if "fixupx.com/" in url:
-                url = url.replace('https://fixup', 'https://')
-            if "girlcockx.com/" in url:
-                url = url.replace('https://girlcock', 'https://')
+            downloader, url_formats = services["Twitter"]
+            print(url_formats)
+            for url_format in url_formats:
+                if "fxtwitter.com/" in url:
+                    url = url.replace('https://fx', 'https://')
+                if "vxtwitter.com/" in url:
+                    url = url.replace('https://vx', 'https://')
+                if "fixupx.com/" in url:
+                    url = url.replace('https://fixup', 'https://')
+                if "girlcockx.com/" in url:
+                    url = url.replace('https://girlcock', 'https://')
             
             # Set messageToEdit var
             if messageToEdit == None:
@@ -231,8 +222,15 @@ async def CreatePreview(message, messageToEdit = None, reactedUser = None, Audio
             url_without_query = urlunparse(parsed_url._replace(query=''))
 
             # TODO: If statement to check if link service is Medal or Odysee. Do NOT use regex!!!
-                DownloadVideo()
-            else:
-                DownloadVideo()
-    except:
-        pass
+            # print(url_without_query)
+            # print(services["Odysee"])
+            # print(services["Medal"])
+
+            #     DownloadVideo()
+            # else:
+            #     DownloadVideo()
+    except Exception as e:
+       await message.channel.send(f"The following error occured while generating the video:\n{e}")
+
+token = os.getenv('DISCORD_TOKEN')
+client.run(token)
