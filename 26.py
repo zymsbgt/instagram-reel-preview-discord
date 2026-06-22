@@ -10,7 +10,6 @@
 
 import discord
 from discord import app_commands
-import requests
 import os
 import platform
 from dotenv import load_dotenv
@@ -63,6 +62,17 @@ TriggerLinks = list(dict.fromkeys(TriggerLinks))
 
 # Discord origin-channel upload limit (non-boosted server = 8 MB).
 ORIGIN_LIMIT_MB = 8
+# Alt channel's upload ceiling. Files larger than this can't be delivered anywhere, so we give up.
+ALT_LIMIT_MB = 50
+
+# Media-download timeout. No overall cap (cobalt tunnels can remux slowly and trickle data,
+# and aiohttp's default total=300s was cutting downloads off at exactly 5 minutes), but if the
+# connection stalls with no data for sock_read seconds, give up instead of hanging forever.
+DOWNLOAD_TIMEOUT = aiohttp.ClientTimeout(total=None, sock_connect=30, sock_read=20)
+
+# Cobalt instances require a uniquely identifiable User-Agent; the tunnel endpoints expect it too,
+# so the same UA is sent on both the API request and the media download.
+USER_AGENT = f"ZymBot/46.250.233.81.rolling.release GodotEngine/4.3.stable.official {platform.system()}"
 
 # Guild IDs with special behaviour (kept hardcoded, matching cobalt_v10.py)
 DEBUG_GUILD_ID = 443253214859755522       # bot developer's server; verbose debug output
@@ -260,7 +270,10 @@ async def CreatePreview(message, messageToEdit=None, reactedUser=None, AudioOnly
 
             await editMessage.delete()
     except Exception as e:
-        await message.channel.send(f"The following error occured while generating the video:\n{e}")
+        # Some exceptions (e.g. asyncio.TimeoutError) have a blank str(), so include the type name.
+        error_text = f"{type(e).__name__}: {e}" if str(e) else type(e).__name__
+        print(f"Error in CreatePreview: {error_text}")
+        await message.channel.send(f"The following error occured while generating the video:\n{error_text}")
     finally:
         # Always release the lock, even if the body threw, so the user is never permanently stuck.
         if requester_id in processingUsers:
@@ -350,21 +363,22 @@ async def upload_to_alt_channel(message, filename):
 async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnly):
     """Handle a Cobalt 'tunnel' response: stream to disk, then upload. Returns (InfoMessage, isEmpty)."""
     InfoMessage = None
-    video_response = requests.get(video_url, stream=True)
     if AudioOnly:
         MediaType, filename = "Audio", "audio.mp3"
     else:
         MediaType, filename = "Video", "video.mp4"
-    content_disposition = video_response.headers.get('Content-Disposition')
-    if content_disposition is not None:
-        match = re.search('filename="(.+)"', content_disposition)
-        if match:
-            filename = match[1]
 
-    with open(filename, "wb") as file:
-        for chunk in video_response.iter_content(chunk_size=1024):
-            if chunk:
-                file.write(chunk)
+    async with aiohttp.ClientSession(timeout=DOWNLOAD_TIMEOUT) as session:
+        async with session.get(video_url, headers={"User-Agent": USER_AGENT}) as video_response:
+            content_disposition = video_response.headers.get('Content-Disposition')
+            if content_disposition is not None:
+                match = re.search('filename="(.+)"', content_disposition)
+                if match:
+                    filename = match[1]
+
+            with open(filename, "wb") as file:
+                async for chunk in video_response.content.iter_chunked(65536):
+                    file.write(chunk)
 
     file_size_bytes = os.path.getsize(filename)
     file_size_mb = file_size_bytes / (1024 * 1024)
@@ -382,15 +396,19 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
                 await message.channel.send(file=discord.File(filename))
             except Exception:
                 await message.channel.send("**Error**: Failed to upload uncompressed video to Discord")
-        else:
-            # Too big for the origin channel. The tunnel url is ephemeral, so try the higher-limit alt channel.
+        elif file_size_mb <= ALT_LIMIT_MB:
+            # Too big for the origin channel but within the alt channel's ceiling. The tunnel url is
+            # ephemeral, so route the file itself through the higher-limit alt channel.
             await editMessage.edit(content="Download successful, but the file is above the filesize limit. Uploading to alternate channel...")
             attachment_url = await upload_to_alt_channel(message, filename)
             if attachment_url:
                 await message.channel.send(f"✅ **Upload successful!**\nSince the file was over the limit, I have embedded it here: {attachment_url}")
             else:
                 # tunnel url is useless to hand out, so we give up.
-                await message.channel.send(f"**Error**: The file is too large to upload ({file_size_mb:.1f} MB) and the backup upload failed.")
+                await message.channel.send(f"**Error**: The file ({file_size_mb:.1f} MB) is over the upload limit and the backup upload failed.")
+        else:
+            # Above the alt channel's ceiling too. Nothing we can do with an ephemeral tunnel url, so give up.
+            await message.channel.send(f"**Error**: The file is too large to upload ({file_size_mb:.1f} MB). Maximum supported is {ALT_LIMIT_MB} MB.")
         return InfoMessage, False
     finally:
         if os.path.exists(filename):
@@ -400,8 +418,11 @@ async def UploadVideoStream(message, editMessage, DebugMode, video_url, AudioOnl
 async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
     """Handle a Cobalt 'redirect' response: download in memory, then upload. Returns (InfoMessage, isEmpty)."""
     InfoMessage = None
-    video_response = requests.get(video_url)
-    video_bytes_io = io.BytesIO(video_response.content)
+    async with aiohttp.ClientSession(timeout=DOWNLOAD_TIMEOUT) as session:
+        async with session.get(video_url, headers={"User-Agent": USER_AGENT}) as video_response:
+            video_content = await video_response.read()
+            content_disposition = video_response.headers.get('Content-Disposition')
+    video_bytes_io = io.BytesIO(video_content)
 
     video_bytes_io.seek(0, io.SEEK_END)
     file_size_bytes = video_bytes_io.tell()
@@ -418,7 +439,6 @@ async def UploadVideo(message, editMessage, DebugMode, video_url, AudioOnly):
         video_bytes_io.seek(0)
         await editMessage.edit(content="Download success! Uploading now...")
         filename = "audio.mp3" if AudioOnly else "video.mp4"
-        content_disposition = video_response.headers.get('Content-Disposition')
         if content_disposition is not None:
             match = re.search('filename="(.+)"', content_disposition)
             if match:
@@ -442,6 +462,7 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly, start_index=
     On exhaustion, server_index equals the number of servers queried.
     """
     # YouTube / Bsky / Bilibili use a server subset that excludes COBALT_SERVER_0.
+    # TODO: Change this definition to service names instead of hard-coded URLs.
     if "youtube.com/watch?v=" in url or "youtu.be/" in url or "youtube.com/shorts/" in url or "bsky.app/" in url or "bilibili.com/" in url or "bilibili.tv/" in url:
         cobalt_servers = {
             'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY')),
@@ -457,11 +478,10 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly, start_index=
             'COBALT_SERVER_3': (os.getenv('COBALT_SERVER_3'), os.getenv('COBALT_SERVER_3_API_KEY')),
             'COBALT_SERVER_4': (os.getenv('COBALT_SERVER_4'), os.getenv('COBALT_SERVER_4_API_KEY'))
         }
-    userAgent = f"ZymBot/46.250.233.81.rolling.release GodotEngine/4.3.stable.official {platform.system()}"
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
-        "User-Agent": userAgent
+        "User-Agent": USER_AGENT
     }
 
     errorLogs = []
