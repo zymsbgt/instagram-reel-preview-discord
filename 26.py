@@ -43,7 +43,7 @@ services = {
     "Tumblr":     ("Cobalt", ["tumblr.com/"]),
     "Twitch":     ("Cobalt", ["twitch.tv/"]),
     "Bluesky":    ("Cobalt", ["bsky.app/"]),
-    "Xiaohongshu":("Cobalt", ["xiaohongshu.com/"]),
+    "Xiaohongshu":("Cobalt", ["xiaohongshu.com/", "xhslink.com/"]),
     "Newgrounds": ("Cobalt", ["newgrounds.com/"]),
     "Facebook":   ("Cobalt", ["facebook.com/"]),
     "Medal":      ("YtDlp",  ["medal.tv/"]),
