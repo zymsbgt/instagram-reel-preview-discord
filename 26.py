@@ -61,7 +61,7 @@ for svc, (_, substrings) in services.items():
 TriggerLinks = list(dict.fromkeys(TriggerLinks))
 
 # Discord origin-channel upload limit (non-boosted server = 8 MB).
-ORIGIN_LIMIT_MB = 8
+ORIGIN_LIMIT_MB = 20
 # Alt channel's upload ceiling. Files larger than this can't be delivered anywhere, so we give up.
 ALT_LIMIT_MB = 50
 
