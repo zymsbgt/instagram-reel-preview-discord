@@ -48,7 +48,8 @@ services = {
     "Facebook":   ("Cobalt", ["facebook.com/"]),
     "Medal":      ("YtDlp",  ["medal.tv/"]),
     "Odysee":     ("YtDlp",  ["odysee.com/"]),
-    "Bandcamp":   ("YtDlp",  ["bandcamp.com/"])
+    "Bandcamp":   ("YtDlp",  ["bandcamp.com/"]),
+    "Rumble":     ("YtDlp",  ["rumble.com/v"])
 }
 
 # Services that only carry audio, so they offer the 🎵 reaction only (no 🎬).
