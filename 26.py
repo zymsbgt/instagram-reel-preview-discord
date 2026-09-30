@@ -46,7 +46,7 @@ services = {
     "Xiaohongshu":("Cobalt", ["xiaohongshu.com/", "xhslink.com/"]),
     "Newgrounds": ("Cobalt", ["newgrounds.com/"]),
     "Facebook":   ("Cobalt", ["facebook.com/"]),
-    "Medal":      ("YtDlp",  ["medal.tv/"]),
+    "Medal":      ("Cobalt", ["medal.tv/"]),
     "Odysee":     ("YtDlp",  ["odysee.com/"]),
     "Bandcamp":   ("YtDlp",  ["bandcamp.com/"]),
     "Rumble":     ("YtDlp",  ["rumble.com/v"])
@@ -60,6 +60,17 @@ for svc, (_, substrings) in services.items():
     TriggerLinks.extend(substrings)
 # remove duplicates while preserving order
 TriggerLinks = list(dict.fromkeys(TriggerLinks))
+
+# Cobalt servers, queried in this order. Each reads its URL/API key from the env vars <id> and <id>_API_KEY.
+COBALT_SERVER_IDS = ['COBALT_SERVER_0', 'COBALT_SERVER_1', 'COBALT_SERVER_2', 'COBALT_SERVER_3', 'COBALT_SERVER_4']
+# Per-server service exclusions: server id -> set of service names (keys of `services`) it must never be asked for.
+# Use {"all"} to take a server out of rotation entirely (e.g. while it's having issues).
+COBALT_SERVER_EXCLUSIONS = {
+    'COBALT_SERVER_0': {"all", "YouTube", "Bluesky", "Bilibili", "Medal"}, # Invalid IP address
+    'COBALT_SERVER_2': {"Tumblr", "Medal"},
+    'COBALT_SERVER_3': {"all", "Medal"}, # Invalid API key
+    'COBALT_SERVER_4': {"Medal"}
+}
 
 # Discord origin-channel upload limit (non-boosted server = 8 MB).
 ORIGIN_LIMIT_MB = 20
@@ -462,23 +473,13 @@ async def SendRequestToCobalt(url, editMessage, message, AudioOnly, start_index=
     On success, server_index is the index of the server that succeeded (resume the next attempt at index+1).
     On exhaustion, server_index equals the number of servers queried.
     """
-    # YouTube / Bsky / Bilibili use a server subset that excludes COBALT_SERVER_0.
-    # TODO: Change this definition to service names instead of hard-coded URLs.
-    if "youtube.com/watch?v=" in url or "youtu.be/" in url or "youtube.com/shorts/" in url or "bsky.app/" in url or "bilibili.com/" in url or "bilibili.tv/" in url:
-        cobalt_servers = {
-            'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY')),
-            'COBALT_SERVER_2': (os.getenv('COBALT_SERVER_2'), os.getenv('COBALT_SERVER_2_API_KEY')),
-            'COBALT_SERVER_3': (os.getenv('COBALT_SERVER_3'), os.getenv('COBALT_SERVER_3_API_KEY')),
-            'COBALT_SERVER_4': (os.getenv('COBALT_SERVER_4'), os.getenv('COBALT_SERVER_4_API_KEY'))
-        }
-    else:
-        cobalt_servers = {
-            'COBALT_SERVER_0': (os.getenv('COBALT_SERVER_0'), os.getenv('COBALT_SERVER_0_API_KEY')),
-            'COBALT_SERVER_1': (os.getenv('COBALT_SERVER_1'), os.getenv('COBALT_SERVER_1_API_KEY')),
-            'COBALT_SERVER_2': (os.getenv('COBALT_SERVER_2'), os.getenv('COBALT_SERVER_2_API_KEY')),
-            'COBALT_SERVER_3': (os.getenv('COBALT_SERVER_3'), os.getenv('COBALT_SERVER_3_API_KEY')),
-            'COBALT_SERVER_4': (os.getenv('COBALT_SERVER_4'), os.getenv('COBALT_SERVER_4_API_KEY'))
-        }
+    # Skip servers that have the detected service listed in COBALT_SERVER_EXCLUSIONS.
+    service_name, _ = detect_service(url)
+    cobalt_servers = {
+        server_id: (os.getenv(server_id), os.getenv(f'{server_id}_API_KEY'))
+        for server_id in COBALT_SERVER_IDS
+        if not {"all", service_name} & COBALT_SERVER_EXCLUSIONS.get(server_id, set())
+    }
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
